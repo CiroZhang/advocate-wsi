@@ -7,3 +7,10 @@ __pycache__/
 .DS_Store
 *.log
 .env
+*.aux
+*.bbl
+*.blg
+*.fls
+*.fdb_latexmk
+*.out
+*.synctex.gz
