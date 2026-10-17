@@ -1,0 +1,32 @@
+% Method diagram (TikZ), included from main.tex
+\begin{tikzpicture}[font=\scriptsize, >=Stealth, node distance=2mm,
+  box/.style={draw, rounded corners=2pt, align=center, inner sep=2pt, minimum height=6mm},
+  tile/.style={draw, minimum size=2.2mm, inner sep=0pt},
+  lab/.style={font=\tiny, align=center}]
+% slide
+\node[draw, rounded corners=3pt, minimum width=11mm, minimum height=14mm, fill=gray!8] (wsi) at (0,0) {};
+\foreach \x/\y/\c in {-.25/.35/red!45, .2/.2/blue!35, -.1/-.25/blue!35, .25/-.4/orange!55, -.3/-.05/blue!25}
+  \fill[\c] (\x,\y) circle (0.9mm);
+\node[lab, below=0.5mm of wsi] {slide};
+% cheap scorer
+\node[box, fill=yellow!15, right=4mm of wsi] (g) {cheap\\scorer $g$\\[-1pt]{\tiny low mag, B0}};
+\draw[->] (wsi) -- (g);
+% advocates
+\foreach \i/\name/\c/\yy in {1/class 1/blue!35/0.62, 2/class 2/red!45/0, 3/class $C$/orange!55/-0.62} {
+  \node[box, minimum width=14mm, minimum height=4.6mm, right=17mm of g.east, anchor=west, yshift=\yy cm] (a\i) {advocate: \name};
+  \draw[->] (g.east) -- (a\i.west);
+  \foreach \k in {0,1,2} \node[tile, fill=\c, right=0.6mm+\k*2.6mm of a\i.east, anchor=west] (t\i\k) {};
+}
+\node[lab, above=0mm of a1.north] {$K_c$ tiles each};
+\node[font=\tiny, red!70!black] at ($(a3.south)+(0,-0.22)$) {training: one wrong-class advocate is a white-box attacker};
+% FM + judge
+\node[box, fill=green!10, right=11mm of a2.east, anchor=west, minimum width=10mm] (fm) {full-res\\read +\\FM};
+\foreach \i in {1,2,3} \draw[->] (t\i2.east) -- (fm.west);
+\node[box, fill=purple!10, right=3mm of fm] (j) {judge $J$\\[-1pt]{\tiny ABMIL}};
+\draw[->] (fm) -- (j);
+\node[right=2mm of j] (y) {$\hat y$};
+\draw[->] (j) -- (y);
+% inset: single selector
+\node[draw, dashed, rounded corners=2pt, align=left, font=\tiny, anchor=north west] at ($(wsi.south west)+(0,-0.75)$) (inset)
+  {\textbf{single selector (ADMIL-style):} \; $g$ $\to$ top-$K$ by attention $\to$ FM $\to$ frozen MIL $F$ \quad {\color{red!70!black}one selector = single point of failure}};
+\end{tikzpicture}

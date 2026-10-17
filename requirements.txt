@@ -1,0 +1,13 @@
+# Python 3.11. Feature extraction ran on Narval A100s; analysis runs on CPU.
+torch>=2.1
+timm>=0.9
+numpy
+scipy
+scikit-learn
+pillow
+openslide-python      # plus the OpenSlide C library
+matplotlib
+transformers          # Phikon-v2 (cervical pilot only)
+torchmil              # published MIL baselines (src/mil_baselines.py)
+# CONCH: pip install git+https://github.com/mahmoodlab/CONCH.git  (gated weights on Hugging Face)
+# UNI:   gated weights on Hugging Face (MahmoodLab/UNI)
