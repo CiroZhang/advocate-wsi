@@ -1,0 +1,25 @@
+{
+ "method": "dtfdmil",
+ "seed": 1,
+ "best_epoch": 3,
+ "val_auc": 0.9510869565217391,
+ "train_s": 96.18051838874817,
+ "gpu": "NVIDIA A100-SXM4-40GB",
+ "manifest": "/scratch/ciro/shared_baselines/manifests/c16_r50bt.csv",
+ "val_thr": 0.197551429271698,
+ "testA": {
+  "auc": 0.9119897959183674,
+  "balacc": 0.8762755102040816,
+  "sens": 0.8775510204081632,
+  "spec": 0.875,
+  "n": 129,
+  "ms_aggregator_median": 5.602158140391111
+ },
+ "testA_valthr": {
+  "auc": 0.9119897959183674,
+  "balacc": 0.8723214285714285,
+  "sens": 0.8571428571428571,
+  "spec": 0.8875,
+  "n": 129
+ }
+}

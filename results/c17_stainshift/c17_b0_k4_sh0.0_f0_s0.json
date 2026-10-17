@@ -1,0 +1,56 @@
+{
+ "res": {
+  "full_conch": {
+   "acc": 0.82,
+   "balacc": 0.6248816287878788,
+   "kappa": 0.9075500770416025,
+   "tumour_balacc": 0.8810763888888888
+  },
+  "teach": {
+   "acc": 0.79,
+   "balacc": 0.5333333333333333,
+   "kappa": 0.8542274052478134,
+   "tumour_balacc": 0.7777777777777778
+  },
+  "teach_wb_worst": {
+   "acc": 0.75,
+   "balacc": 0.4921875,
+   "kappa": 0.8326079678607299,
+   "tumour_balacc": 0.7621527777777778
+  },
+  "noflag": {
+   "acc": 0.78,
+   "balacc": 0.5166666666666666,
+   "kappa": 0.8480367997371447,
+   "tumour_balacc": 0.7777777777777778
+  },
+  "noflag_wb_worst": {
+   "acc": 0.71,
+   "balacc": 0.4682291666666667,
+   "kappa": 0.7721354166666666,
+   "tumour_balacc": 0.7447916666666667
+  },
+  "admil": {
+   "acc": 0.79,
+   "balacc": 0.5333333333333333,
+   "kappa": 0.894250352498825,
+   "tumour_balacc": 0.8194444444444444
+  },
+  "admil_wb_worst": {
+   "acc": 0.59,
+   "balacc": 0.23046875,
+   "kappa": -0.05709379695213568,
+   "tumour_balacc": 0.4609375
+  }
+ },
+ "info": {
+  "seed": 0,
+  "fold": 0,
+  "cheap": "b0",
+  "Kc": 4,
+  "shift": "0.0",
+  "n_train": 400,
+  "n_test": 100,
+  "mean_tiles_test": 1219.92
+ }
+}

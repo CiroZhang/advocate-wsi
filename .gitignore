@@ -1,0 +1,9 @@
+*_sel.pt
+*.svs
+*.tif
+feats/
+slides/
+__pycache__/
+.DS_Store
+*.log
+.env

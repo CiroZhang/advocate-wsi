@@ -1,0 +1,274 @@
+{
+ "C16": [
+  {
+   "method": "full slide (UNI, all tiles)",
+   "score": 0.9693877551020408,
+   "attacked": null,
+   "sec": 33.29
+  },
+  {
+   "method": "cheap full slide (B0, all tiles)",
+   "score": 0.7132227891156462,
+   "attacked": null,
+   "sec": 5.43
+  },
+  {
+   "method": "UNI on 16 random tiles (trained on random)",
+   "score": 0.6660289115646257,
+   "attacked": null,
+   "sec": 0.04372352651452963
+  },
+  {
+   "method": "UNI on 64 random tiles (trained on random)",
+   "score": 0.6881802721088435,
+   "attacked": null,
+   "sec": 0.17489410605811853
+  },
+  {
+   "method": "UNI on 256 random tiles (trained on random)",
+   "score": 0.7847363945578231,
+   "attacked": null,
+   "sec": 0.6995764242324741
+  },
+  {
+   "method": "ADMIL-style (16 tiles)",
+   "score": 0.9427295918367348,
+   "attacked": 0.3145833333333333,
+   "sec": 5.473723526514529
+  },
+  {
+   "method": "ours (16 tiles)",
+   "score": 0.9421768707482995,
+   "attacked": 0.9312074829931972,
+   "sec": 5.473723526514529
+  },
+  {
+   "method": "ADMIL-style + escalate 10%",
+   "score": 0.945578231292517,
+   "attacked": null,
+   "sec": 8.80272352651453
+  },
+  {
+   "method": "ours + escalate 10%",
+   "score": 0.935374149659864,
+   "attacked": null,
+   "sec": 8.80272352651453
+  },
+  {
+   "method": "ADMIL-style + escalate 20%",
+   "score": 0.95578231292517,
+   "attacked": null,
+   "sec": 12.13172352651453
+  },
+  {
+   "method": "ours + escalate 20%",
+   "score": 0.9421768707482995,
+   "attacked": null,
+   "sec": 12.13172352651453
+  }
+ ],
+ "C17": [
+  {
+   "method": "full slide (CONCH, all tiles)",
+   "score": 0.8904153110847335,
+   "attacked": null,
+   "sec": 24.44
+  },
+  {
+   "method": "cheap full slide (B0, all tiles)",
+   "score": 0.5668411888510315,
+   "attacked": null,
+   "sec": 6.57
+  },
+  {
+   "method": "CONCH on 16 random tiles (trained on random)",
+   "score": 0.6693907241045939,
+   "attacked": null,
+   "sec": 2.8366602870813398
+  },
+  {
+   "method": "CONCH on 64 random tiles (trained on random)",
+   "score": 0.8157690511792981,
+   "attacked": null,
+   "sec": 3.336641148325359
+  },
+  {
+   "method": "CONCH on 256 random tiles (trained on random)",
+   "score": 0.86868433678832,
+   "attacked": null,
+   "sec": 5.336564593301436
+  },
+  {
+   "method": "ADMIL-style (16 tiles)",
+   "score": 0.8726137151325698,
+   "attacked": -0.2411777273713403,
+   "sec": 6.73666028708134
+  },
+  {
+   "method": "ours (16 tiles)",
+   "score": 0.8228804700402088,
+   "attacked": 0.7145139008807411,
+   "sec": 6.73666028708134
+  },
+  {
+   "method": "ADMIL-style + escalate 10%",
+   "score": 0.8779455913698865,
+   "attacked": null,
+   "sec": 8.91366028708134
+  },
+  {
+   "method": "ours + escalate 10%",
+   "score": 0.8349917430088746,
+   "attacked": null,
+   "sec": 8.91366028708134
+  },
+  {
+   "method": "ADMIL-style + escalate 20%",
+   "score": 0.8812701627684457,
+   "attacked": null,
+   "sec": 11.09066028708134
+  },
+  {
+   "method": "ours + escalate 20%",
+   "score": 0.8446212492354748,
+   "attacked": null,
+   "sec": 11.09066028708134
+  }
+ ],
+ "RCC": [
+  {
+   "method": "full slide (CONCH, all tiles)",
+   "score": 0.9325804512424408,
+   "attacked": null,
+   "sec": 32.36
+  },
+  {
+   "method": "cheap full slide (B0, all tiles)",
+   "score": 0.8976523899700564,
+   "attacked": null,
+   "sec": 7.82
+  },
+  {
+   "method": "CONCH on 12 random tiles (trained on random)",
+   "score": 0.919709116355972,
+   "attacked": null,
+   "sec": 1.7028385358185494
+  },
+  {
+   "method": "CONCH on 48 random tiles (trained on random)",
+   "score": 0.9292855402022125,
+   "attacked": null,
+   "sec": 1.9513541432741972
+  },
+  {
+   "method": "CONCH on 192 random tiles (trained on random)",
+   "score": 0.9391259596304071,
+   "attacked": null,
+   "sec": 2.9454165730967885
+  },
+  {
+   "method": "ADMIL-style (12 tiles)",
+   "score": 0.9065320757140145,
+   "attacked": 0.021775628949324676,
+   "sec": 7.90283853581855
+  },
+  {
+   "method": "ours (12 tiles)",
+   "score": 0.9196497028176963,
+   "attacked": 0.8664568661619221,
+   "sec": 7.90283853581855
+  },
+  {
+   "method": "ADMIL-style + escalate 10%",
+   "score": 0.9215835694063073,
+   "attacked": null,
+   "sec": 10.97683853581855
+  },
+  {
+   "method": "ours + escalate 10%",
+   "score": 0.9360238587476007,
+   "attacked": null,
+   "sec": 10.97683853581855
+  },
+  {
+   "method": "ADMIL-style + escalate 20%",
+   "score": 0.927023270524369,
+   "attacked": null,
+   "sec": 14.05083853581855
+  },
+  {
+   "method": "ours + escalate 20%",
+   "score": 0.9340050839996206,
+   "attacked": null,
+   "sec": 14.05083853581855
+  }
+ ],
+ "NSCLC": [
+  {
+   "method": "full slide (CONCH, all tiles)",
+   "score": 0.9231691213809629,
+   "attacked": null,
+   "sec": 26.32
+  },
+  {
+   "method": "cheap full slide (B0, all tiles)",
+   "score": 0.8500491388721192,
+   "attacked": null,
+   "sec": 6.58
+  },
+  {
+   "method": "CONCH on 8 random tiles (trained on random)",
+   "score": 0.8945503833091248,
+   "attacked": null,
+   "sec": 1.420416771912099
+  },
+  {
+   "method": "CONCH on 32 random tiles (trained on random)",
+   "score": 0.9168073687382934,
+   "attacked": null,
+   "sec": 1.5716670876483962
+  },
+  {
+   "method": "CONCH on 128 random tiles (trained on random)",
+   "score": 0.9184920483828746,
+   "attacked": null,
+   "sec": 2.176668350593584
+  },
+  {
+   "method": "ADMIL-style (8 tiles)",
+   "score": 0.9086145785436374,
+   "attacked": 0.0034975693131032936,
+   "sec": 6.630416771912099
+  },
+  {
+   "method": "ours (8 tiles)",
+   "score": 0.8738940476220803,
+   "attacked": 0.8412607877850425,
+   "sec": 6.630416771912099
+  },
+  {
+   "method": "ADMIL-style + escalate 10%",
+   "score": 0.918521274284412,
+   "attacked": null,
+   "sec": 9.1254167719121
+  },
+  {
+   "method": "ours + escalate 10%",
+   "score": 0.8987886524826373,
+   "attacked": null,
+   "sec": 9.1254167719121
+  },
+  {
+   "method": "ADMIL-style + escalate 20%",
+   "score": 0.9208046712089953,
+   "attacked": null,
+   "sec": 11.6204167719121
+  },
+  {
+   "method": "ours + escalate 20%",
+   "score": 0.9083855814163789,
+   "attacked": null,
+   "sec": 11.6204167719121
+  }
+ ]
+}

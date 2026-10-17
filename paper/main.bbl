@@ -1,0 +1,111 @@
+\begin{thebibliography}{10}
+
+\bibitem{uni}
+Richard~J. Chen et~al.
+\newblock Towards a general-purpose foundation model for computational
+  pathology.
+\newblock {\em Nature Medicine}, 2024.
+
+\bibitem{conch}
+Ming~Y. Lu et~al.
+\newblock A visual-language foundation model for computational pathology.
+\newblock {\em Nature Medicine}, 2024.
+
+\bibitem{ilse2018abmil}
+Maximilian Ilse, Jakub Tomczak, and Max Welling.
+\newblock Attention-based deep multiple instance learning.
+\newblock In {\em ICML}, 2018.
+
+\bibitem{lu2021data}
+Ming~Y. Lu, Drew F.~K. Williamson, Tiffany~Y. Chen, Richard~J. Chen, Matteo
+  Barbieri, and Faisal Mahmood.
+\newblock Data-efficient and weakly supervised computational pathology on
+  whole-slide images.
+\newblock {\em Nature Biomedical Engineering}, 2021.
+
+\bibitem{admil2026}
+Stothers, Wu, and Lotter.
+\newblock Attention-distilled {MIL} for selective foundation model inference.
+\newblock {\em arXiv preprint arXiv:2608.22066}, 2026.
+
+\bibitem{tan2019efficientnet}
+Mingxing Tan and Quoc Le.
+\newblock {EfficientNet}: Rethinking model scaling for convolutional neural
+  networks.
+\newblock In {\em ICML}, 2019.
+
+\bibitem{eagle2026}
+A deep learning framework for efficient pathology image analysis.
+\newblock {\em Nature Communications (arXiv:2502.13027)}, 2026.
+
+\bibitem{li2021dual}
+Bin Li, Yin Li, and Kevin~W. Eliceiri.
+\newblock Dual-stream multiple instance learning network for whole slide image
+  classification with self-supervised contrastive learning.
+\newblock In {\em CVPR}, 2021.
+
+\bibitem{shao2021transmil}
+Zhuchen Shao, Hao Bian, Yang Chen, Yifeng Wang, Jian Zhang, Xiangyang Ji, and
+  Yongbing Zhang.
+\newblock {TransMIL}: Transformer based correlated multiple instance learning
+  for whole slide image classification.
+\newblock In {\em NeurIPS}, 2021.
+
+\bibitem{zhang2022dtfd}
+Hongrun Zhang, Yanda Meng, Yitian Zhao, Yihong Qiao, Xiaoyun Yang, Sarah~E.
+  Coupland, and Yalin Zheng.
+\newblock {DTFD-MIL}: Double-tier feature distillation multiple instance
+  learning for histopathology whole slide image classification.
+\newblock In {\em CVPR}, 2022.
+
+\bibitem{foote2021now}
+Alex Foote et~al.
+\newblock Now you see it, now you don't: Adversarial vulnerabilities in
+  computational pathology.
+\newblock {\em arXiv:2106.08153}, 2021.
+
+\bibitem{mil_adv2022}
+Yu-Xuan Zhang et~al.
+\newblock Interpreting vulnerabilities of multi-instance learning to
+  adversarial perturbations.
+\newblock {\em arXiv:2211.17071}, 2022.
+
+\bibitem{irving2018debate}
+Geoffrey Irving, Paul Christiano, and Dario Amodei.
+\newblock {AI} safety via debate.
+\newblock {\em arXiv:1805.00899}, 2018.
+
+\bibitem{khan2024debate}
+Akbir Khan et~al.
+\newblock Debating with more persuasive {LLMs} leads to more truthful answers.
+\newblock In {\em ICML}, 2024.
+
+\bibitem{kenton2024scalable}
+Zachary Kenton et~al.
+\newblock On scalable oversight with weak {LLMs} judging strong {LLMs}.
+\newblock In {\em NeurIPS}, 2024.
+
+\bibitem{camelyon17}
+Peter Bandi et~al.
+\newblock From detection of individual metastases to classification of lymph
+  node status at the patient level: the {CAMELYON17} challenge.
+\newblock {\em IEEE Transactions on Medical Imaging}, 38(2):550--560, 2019.
+
+\bibitem{c16}
+Babak Ehteshami~Bejnordi et~al.
+\newblock Diagnostic assessment of deep learning algorithms for detection of
+  lymph node metastases in women with breast cancer.
+\newblock {\em JAMA}, 2017.
+
+\bibitem{tcga}
+{National Cancer Institute}.
+\newblock The cancer genome atlas program.
+\newblock Genomic Data Commons, \url{https://portal.gdc.cancer.gov}.
+
+\bibitem{tellez2019stain}
+David Tellez et~al.
+\newblock Quantifying the effects of data augmentation and stain color
+  normalization in convolutional neural networks for computational pathology.
+\newblock {\em Medical Image Analysis}, 58, 2019.
+
+\end{thebibliography}
