@@ -4,26 +4,27 @@
   rand_K_tr  : CONCH ABMIL trained AND tested on K random tiles (fresh draw per epoch)
 usage: python exp_frontier.py SEED FOLD DATASET(rcc|c17|c16|nsclc)"""
 import sys, os, json, time, csv, numpy as np, torch, torch.nn as nn, torch.nn.functional as Fn
+ROOT = os.environ.get('ADV_ROOT', '/scratch/ciro/cvpr_lab')  # data/ and studentB_debate/ live under here
 from sklearn.metrics import cohen_kappa_score, balanced_accuracy_score, roc_auc_score
-seed, fold, DS = int(sys.argv[1]), int(sys.argv[2]), sys.argv[3]; DEV = 'cuda'; OUT = "/scratch/ciro/cvpr_lab/studentB_debate/results"
+seed, fold, DS = int(sys.argv[1]), int(sys.argv[2]), sys.argv[3]; DEV = 'cuda' if torch.cuda.is_available() else 'cpu'; OUT = ROOT + "/studentB_debate/results"
 torch.manual_seed(seed); rng = np.random.default_rng(seed); t0 = time.time()
 if DS == 'rcc':
-    D = "/scratch/ciro/cvpr_lab/data/tcga_rcc"; PR = ['TCGA-KIRC', 'TCGA-KIRP', 'TCGA-KICH']; C = 3; KB = 12
+    D = ROOT + "/data/tcga_rcc"; PR = ['TCGA-KIRC', 'TCGA-KIRP', 'TCGA-KICH']; C = 3; KB = 12
     lab, case = {}, {}
     for r in csv.DictReader(open(f'{D}/manifest.tsv'), delimiter='\t'): lab[r['file_name'][:-4]] = PR.index(r['project']); case[r['file_name'][:-4]] = r['case']
     names = sorted(n for n in lab if n.split('-')[3][:2] == '01' and os.path.exists(f'{D}/feats/{n}.pt'))
 elif DS == 'c16':  # official split (fold ignored); UNI features as exp_distill.py
-    D = "/scratch/ciro/cvpr_lab/data/camelyon16/torchmil"; CD = "/scratch/ciro/cvpr_lab/data/camelyon16/cheap/b0"; C = 2; KB = 16
+    D = ROOT + "/data/camelyon16/torchmil"; CD = ROOT + "/data/camelyon16/cheap/b0"; C = 2; KB = 16
     rows = list(csv.DictReader(open(f'{D}/splits.csv'))); spl = {r['bag_name']: r['split'] for r in rows}
     names = [r['bag_name'] for r in rows if os.path.exists(f"{D}/features/{r['bag_name']}.npy") and os.path.exists(f"{CD}/{r['bag_name']}.npy")]
     lab = {n: int(np.load(f'{D}/labels/{n}.npy').reshape(-1)[0]) for n in names}
 elif DS == 'nsclc':
-    D = "/scratch/ciro/cvpr_lab/data/tcga_nsclc"; PR = ['TCGA-LUAD', 'TCGA-LUSC']; C = 2; KB = 8
+    D = ROOT + "/data/tcga_nsclc"; PR = ['TCGA-LUAD', 'TCGA-LUSC']; C = 2; KB = 8
     lab, case = {}, {}
     for r in csv.DictReader(open(f'{D}/manifest.tsv'), delimiter='\t'): lab[r['file_name'][:-4]] = PR.index(r['project']); case[r['file_name'][:-4]] = r['case']
     names = sorted(n for n in lab if n.split('-')[3][:2] == '01' and os.path.exists(f'{D}/feats/{n}.pt'))
 else:
-    D = "/scratch/ciro/cvpr_lab/data/camelyon17"; C = 4; KB = 16; LV = {'negative': 0, 'itc': 1, 'micro': 2, 'macro': 3}; lab, cen = {}, {}
+    D = ROOT + "/data/camelyon17"; C = 4; KB = 16; LV = {'negative': 0, 'itc': 1, 'micro': 2, 'macro': 3}; lab, cen = {}, {}
     for r in csv.DictReader(open(f'{D}/stages.csv')):
         if r['patient'].endswith('.tif'): lab[r['patient'][:-4]] = LV[r['stage'].strip().lower()]; cen[r['patient'][:-4]] = int(r['center'])
     names = sorted(n for n in lab if os.path.exists(f'{D}/feats/{n}.pt'))

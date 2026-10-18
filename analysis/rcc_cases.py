@@ -2,8 +2,9 @@
 tiles each subtype advocate presented (seed 0 run where the slide was in the test fold). Tiles: 448 px at 0.5 mpp, shown at 192 px.
 usage: python rcc_cases.py OUTDIR TAG:SLIDEPREFIX [...]   (run where openslide + data are available)"""
 import sys, os, glob, torch, numpy as np, openslide
+ROOT = os.environ.get('ADV_ROOT', '/scratch/ciro/cvpr_lab')  # data/ and studentB_debate/ live under here
 from PIL import Image, ImageDraw
-D = "/scratch/ciro/cvpr_lab/data/tcga_rcc"; RES = "/scratch/ciro/cvpr_lab/studentB_debate/results"; out = sys.argv[1]; os.makedirs(out, exist_ok=True)
+D = ROOT + "/data/tcga_rcc"; RES = ROOT + "/studentB_debate/results"; out = sys.argv[1]; os.makedirs(out, exist_ok=True)
 SEL = [torch.load(f) for f in sorted(glob.glob(f'{RES}/tcga_rcc_b0_k4_f*_s0_sel.pt'))]
 S = ['ccRCC advocate', 'pRCC advocate', 'chRCC advocate']; T = 192
 for arg in sys.argv[2:]:

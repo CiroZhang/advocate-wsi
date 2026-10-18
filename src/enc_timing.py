@@ -2,6 +2,8 @@
 UNI = ViT-L/16 (timm vit_large_patch16_224, init_values 1e-5); students = ResNet50 / ResNet18 / MobileNetV3-L (torchvision).
 FLOPs via torch.utils.flop_counter (counted per image), throughput in fp16 autocast, batch 256, channels-last for CNNs."""
 import time, json, torch, timm, torchvision
+import os
+ROOT = os.environ.get('ADV_ROOT', '/scratch/ciro/cvpr_lab')  # data/ and studentB_debate/ live under here
 from torch.utils.flop_counter import FlopCounterMode
 dev = 'cuda'; torch.backends.cudnn.benchmark = True; out = {}
 models = {'UNI_ViT-L16': lambda: timm.create_model('vit_large_patch16_224', init_values=1e-5, num_classes=0, dynamic_img_size=True),
@@ -25,5 +27,5 @@ for name, mk in models.items():
             torch.cuda.synchronize(); ips = n / (time.time() - t)
         out[f'{name}@{res}'] = {'gflops_per_patch': round(gfl, 2), 'patches_per_s': round(ips, 1)}
         print(name, res, out[f'{name}@{res}'], flush=True)
-json.dump(out, open('/scratch/ciro/cvpr_lab/studentB_debate/results/enc_timing.json', 'w'), indent=1)
+json.dump(out, open(ROOT + '/studentB_debate/results/enc_timing.json', 'w'), indent=1)
 print('DONE')

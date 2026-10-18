@@ -12,9 +12,10 @@ Attacks (white-box on the CONCH teacher, greedy single-tile scores): one wrong-l
 Split: leave-one-centre-out (FOLD = held-out centre 0-4). Metrics: accuracy, balanced accuracy, quadratic kappa.
 usage: CHEAP=b0 python exp_c17.py SEED FOLD"""
 import sys, os, json, time, csv, numpy as np, torch, torch.nn as nn, torch.nn.functional as Fn
+ROOT = os.environ.get('ADV_ROOT', '/scratch/ciro/cvpr_lab')  # data/ and studentB_debate/ live under here
 from sklearn.metrics import cohen_kappa_score, balanced_accuracy_score
 seed, fold = int(sys.argv[1]), int(sys.argv[2]); CH = os.environ.get('CHEAP', 'b0'); Kc = int(os.environ.get('KC', 4)); SH = os.environ.get('SHIFT')  # stain-shifted cheap view for TEST slides only
-D = "/scratch/ciro/cvpr_lab/data/camelyon17"; OUT = "/scratch/ciro/cvpr_lab/studentB_debate/results"; DEV = 'cuda'; C = 4
+D = ROOT + "/data/camelyon17"; OUT = ROOT + "/studentB_debate/results"; DEV = 'cuda' if torch.cuda.is_available() else 'cpu'; C = 4
 LV = {'negative': 0, 'itc': 1, 'micro': 2, 'macro': 3}
 torch.manual_seed(seed); rng = np.random.default_rng(seed); t0 = time.time()
 lab, cen = {}, {}

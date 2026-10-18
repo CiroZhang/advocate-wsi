@@ -5,10 +5,11 @@ Writes data/camelyon16/cheap/<enc>/<slide>.npy (fp16, N x d, same row order as c
 per-slide wall-clock: level-2 128px read time (all patches), level-0 512px read time (200-patch sample, scaled), encoder time per encoder.
 usage: python cheap_feats.py --part i --nparts n"""
 import argparse, json, os, time, numpy as np, torch, timm, openslide
+ROOT = os.environ.get('ADV_ROOT', '/scratch/ciro/cvpr_lab')  # data/ and studentB_debate/ live under here
 from torch.utils.data import Dataset, DataLoader
 ap = argparse.ArgumentParser(); ap.add_argument('--part', type=int, default=0); ap.add_argument('--nparts', type=int, default=1)
 ap.add_argument('--workers', type=int, default=8); a = ap.parse_args()
-R = '/scratch/ciro/cvpr_lab/data/camelyon16'; RAW = f'{R}/raw'; O = f'{R}/cheap'
+R = ROOT + '/data/camelyon16'; RAW = f'{R}/raw'; O = f'{R}/cheap'
 ENCS = {'b0': 'efficientnet_b0.ra_in1k', 'r18': 'resnet18.a1_in1k', 'mnv3': 'mobilenetv3_large_100.ra_in1k'}
 for e in ENCS: os.makedirs(f'{O}/{e}', exist_ok=True)
 os.makedirs(f'{O}/timing', exist_ok=True)

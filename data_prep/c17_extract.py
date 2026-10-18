@@ -4,9 +4,10 @@ cheap features: timm ImageNet efficientnet_b0 / resnet18 on the same tile read a
 Array job: task i of n handles slides[i::n] among fully downloaded slides (raw/done.txt). Re-runnable (skips finished slides).
 Output data/camelyon17/feats/{slide}.pt = {coords (n,2) level-0 xy, side0, mpp, conch fp16, b0 fp16, r18 fp16, timing}."""
 import os, sys, time, numpy as np, torch, openslide, timm
+ROOT = os.environ.get('ADV_ROOT', '/scratch/ciro/cvpr_lab')  # data/ and studentB_debate/ live under here
 from PIL import Image
 from concurrent.futures import ThreadPoolExecutor
-R = "/scratch/ciro/cvpr_lab"; D = f"{R}/data/camelyon17"; OUT = f"{D}/feats"; os.makedirs(OUT, exist_ok=True)
+R = ROOT; D = f"{R}/data/camelyon17"; OUT = f"{D}/feats"; os.makedirs(OUT, exist_ok=True)
 T = 448; MINT = 0.4; BS = 128
 i, n = int(sys.argv[1]), int(sys.argv[2])
 from conch.open_clip_custom import create_model_from_pretrained

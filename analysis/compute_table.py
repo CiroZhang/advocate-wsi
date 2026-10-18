@@ -38,26 +38,28 @@ def runs(ds):  # list of dicts key -> logits, with 'y'
     pat = {'C17': f'{R}/c17/c17_b0_k4_f*_s*.npz', 'RCC': f'{R}/tcga_rcc/tcga_rcc_b0_k4_f*_s*.npz', 'NSCLC': f'{R}/tcga_nsclc/tcga_nsclc_b0_k4_f*_s*.npz'}[ds]
     return [{'y': d['y'], 'full': d['full_conch'], 'admil': d['admil'], 'ours': d['teach'], 'admil_att': d['admil_wb_worst'], 'ours_att': d['teach_wb_worst']}
             for d in map(np.load, sorted(glob.glob(pat)))]
-rows, out = [], {}
-for ds, t in TIM.items():
-    Rn = runs(ds)
-    if not Rn: continue
-    m = lambda key: np.mean([score(ds, r['y'], r[key]) for r in Rn])
-    tab = [('full slide (' + t['fm_name'] + ', all tiles)', m('full'), None, cost(t, 'full'))]
-    fr = [json.load(open(f))['res'] for f in glob.glob(f'{R}/frontier/frontier_{ds.lower()}_f*_s*.json')]
-    mk = 'kappa' if ds == 'C17' else 'balacc'
-    if fr:
-        tab.append(('cheap full slide (B0, all tiles)', np.mean([r['cheap_full'][mk] for r in fr]), None, cost(t, 'cheap')))
-        for K in [t['K'], 4 * t['K'], 16 * t['K']]:
-            tab.append((f'{t["fm_name"]} on {K} random tiles (trained on random)', np.mean([r[f'rand_{K}_tr'][mk] for r in fr]), None, cost(t, 'rand', K)))
-    tab.append((f'ADMIL-style ({t["K"]} tiles)', m('admil'), m('admil_att'), cost(t, 'sel', t['K'])))
-    tab.append((f'ours ({t["K"]} tiles)', m('ours'), m('ours_att'), cost(t, 'sel', t['K'])))
-    for f in [0.1, 0.2]:
-        for key, lab in [('admil', 'ADMIL-style'), ('ours', 'ours')]:
-            tab.append((f'{lab} + escalate {int(f * 100)}%', np.mean([score(ds, r['y'], escalate(r['y'], r[key], r['full'], f)) for r in Rn]), None, cost(t, 'sel', t['K'], f)))
-    out[ds] = [dict(method=a, score=b, attacked=c, sec=d) for a, b, c, d in tab]
-    full_s = cost(t, 'full')
-    rows.append(f'\n### {ds}: {TYPE[ds]} ({MET[ds]}, {len(Rn)} runs)\n\n| method | {MET[ds]} | attacked | s/slide | speed-up |\n|---|---|---|---|---|')
-    rows += [f'| {a} | {b:.3f} | {"" if c is None else f"{c:.3f}"} | {d:.1f} | {full_s / d:.1f}x |' for a, b, c, d in tab]
-txt = '\n'.join(rows); print(txt)
-open(f'{R}/compute_table.md', 'w').write('# Accuracy vs compute per cancer type\n' + (__doc__ or '') + txt + '\n'); json.dump(out, open(f'{R}/compute_table.json', 'w'), indent=1)
+def main():
+    rows, out = [], {}
+    for ds, t in TIM.items():
+        Rn = runs(ds)
+        if not Rn: continue
+        m = lambda key: np.mean([score(ds, r['y'], r[key]) for r in Rn])
+        tab = [('full slide (' + t['fm_name'] + ', all tiles)', m('full'), None, cost(t, 'full'))]
+        fr = [json.load(open(f))['res'] for f in glob.glob(f'{R}/frontier/frontier_{ds.lower()}_f*_s*.json')]
+        mk = 'kappa' if ds == 'C17' else 'balacc'
+        if fr:
+            tab.append(('cheap full slide (B0, all tiles)', np.mean([r['cheap_full'][mk] for r in fr]), None, cost(t, 'cheap')))
+            for K in [t['K'], 4 * t['K'], 16 * t['K']]:
+                tab.append((f'{t["fm_name"]} on {K} random tiles (trained on random)', np.mean([r[f'rand_{K}_tr'][mk] for r in fr]), None, cost(t, 'rand', K)))
+        tab.append((f'ADMIL-style ({t["K"]} tiles)', m('admil'), m('admil_att'), cost(t, 'sel', t['K'])))
+        tab.append((f'ours ({t["K"]} tiles)', m('ours'), m('ours_att'), cost(t, 'sel', t['K'])))
+        for f in [0.1, 0.2]:
+            for key, lab in [('admil', 'ADMIL-style'), ('ours', 'ours')]:
+                tab.append((f'{lab} + escalate {int(f * 100)}%', np.mean([score(ds, r['y'], escalate(r['y'], r[key], r['full'], f)) for r in Rn]), None, cost(t, 'sel', t['K'], f)))
+        out[ds] = [dict(method=a, score=b, attacked=c, sec=d) for a, b, c, d in tab]
+        full_s = cost(t, 'full')
+        rows.append(f'\n### {ds}: {TYPE[ds]} ({MET[ds]}, {len(Rn)} runs)\n\n| method | {MET[ds]} | attacked | s/slide | speed-up |\n|---|---|---|---|---|')
+        rows += [f'| {a} | {b:.3f} | {"" if c is None else f"{c:.3f}"} | {d:.1f} | {full_s / d:.1f}x |' for a, b, c, d in tab]
+    txt = '\n'.join(rows); print(txt)
+    open(f'{R}/compute_table.md', 'w').write('# Accuracy vs compute per cancer type\n' + (__doc__ or '') + txt + '\n'); json.dump(out, open(f'{R}/compute_table.json', 'w'), indent=1)
+if __name__ == '__main__': main()

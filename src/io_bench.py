@@ -2,7 +2,9 @@
 vs level 2 (128x128, the cheap students' input), same 8-process pool, warm-up excluded. 10 test slides spread over sizes.
 Writes cheap/io_bench.json."""
 import json, time, numpy as np, openslide, multiprocessing as mp
-R = '/scratch/ciro/cvpr_lab/data/camelyon16'
+import os
+ROOT = os.environ.get('ADV_ROOT', '/scratch/ciro/cvpr_lab')  # data/ and studentB_debate/ live under here
+R = ROOT + '/data/camelyon16'
 def work(args):
     p, cs, lvl, sz = args; s = openslide.OpenSlide(p); t = 0
     for x, y in cs: s.read_region((int(x), int(y)), lvl, (sz, sz)).convert('RGB')

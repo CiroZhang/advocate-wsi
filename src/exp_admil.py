@@ -10,13 +10,15 @@ reads from raw slides; cheap_feats.py) or r50bt (torchmil). Expensive encoder: U
 Per-slide encoder cost: N * cheap + K * UNI for every selective method.
 usage: CHEAP=b0 python exp_admil.py SEED"""
 import sys, json, time, csv, numpy as np, torch, torch.nn as nn
-sys.path.insert(0, "/scratch/ciro/cvpr_lab/studentB_debate")
+import os
+ROOT = os.environ.get('ADV_ROOT', '/scratch/ciro/cvpr_lab')  # data/ and studentB_debate/ live under here
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # common.py sits next to this script
 from common import *
 
 seed = int(sys.argv[1]); CH = os.environ.get('CHEAP', 'b0'); KS = [1, 2, 4, 8]; R = int(os.environ.get('ROUNDS', 4))
 EP_FULL, EP_SUB, EP_FT = 20, 40, 20; BUD = 400_000; AK = [8, 16, 32, 128]
-D = "/scratch/ciro/cvpr_lab/data/camelyon16/torchmil"; CD = f"/scratch/ciro/cvpr_lab/data/camelyon16/cheap/{CH}"
-OUT = "/scratch/ciro/cvpr_lab/studentB_debate/results"
+D = ROOT + "/data/camelyon16/torchmil"; CD = ROOT + f"/data/camelyon16/cheap/{CH}"
+OUT = ROOT + "/studentB_debate/results"
 cpath = (lambda n: os.path.join(D, 'features_r50bt', n + '.npy')) if CH == 'r50bt' else (lambda n: os.path.join(CD, n + '.npy'))
 rng = np.random.default_rng(seed); torch.manual_seed(seed)
 rows = list(csv.DictReader(open(os.path.join(D, 'splits.csv'))))

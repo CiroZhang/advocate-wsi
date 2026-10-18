@@ -3,9 +3,10 @@ apply a per-slide random HED stain perturbation (Tellez et al. 2018 style: per-c
 plus brightness U[1-s,1+s], encode with the same timm b0. Only the cheap view is shifted; CONCH features are untouched.
 Output data/camelyon17/feats_shift/s{SEV}/{slide}.pt = {b0}. usage: python c17_shift.py TASK NTASKS  (severities 0, .05, .1, .2)"""
 import os, sys, zlib, numpy as np, torch, openslide, timm
+ROOT = os.environ.get('ADV_ROOT', '/scratch/ciro/cvpr_lab')  # data/ and studentB_debate/ live under here
 from PIL import Image
 from concurrent.futures import ThreadPoolExecutor
-D = "/scratch/ciro/cvpr_lab/data/camelyon17"; SEVS = [0.0, 0.05, 0.1, 0.2]; BS = 256
+D = ROOT + "/data/camelyon17"; SEVS = [0.0, 0.05, 0.1, 0.2]; BS = 256
 i, n = int(sys.argv[1]), int(sys.argv[2])
 b0 = timm.create_model('efficientnet_b0.ra_in1k', pretrained=True, num_classes=0).cuda().eval().half()
 IM = torch.tensor([0.485, 0.456, 0.406], device='cuda').view(1, 3, 1, 1); IS = torch.tensor([0.229, 0.224, 0.225], device='cuda').view(1, 3, 1, 1)

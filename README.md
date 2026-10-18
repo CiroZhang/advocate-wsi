@@ -20,6 +20,8 @@ Clean and compromised-selector scores: mean over 3 runs on CAMELYON16 and 5 fold
 | tiles encoded / slide | 16 | 16 | 12 | 8 |
 | s / slide: full → selective | 33.3 → 5.5 | 24.4 → 6.7 | 32.4 → 7.9 | 26.3 → 6.6 |
 
+Under attack, advocates beat the single selector on all four datasets (paired slide-level bootstrap, p < .001; [`results/stats.md`](results/stats.md)). On clean slides they are level on CAMELYON16 and RCC and significantly behind on CAMELYON17 and NSCLC.
+
 ![robustness](docs/fig_robust.png)
 
 **When does selection matter?** Here every method is plotted as accuracy against measured per-slide cost. On focal tasks (lymph-node metastasis), random tiles fail and a selector is required. On diffuse subtyping (RCC, NSCLC), a few random tiles match any selector at a quarter of the cost. The full table is in [`results/compute_table.md`](results/compute_table.md).
@@ -29,9 +31,10 @@ Clean and compromised-selector scores: mean over 3 runs on CAMELYON16 and 5 fold
 ## Repository layout
 
 ```
-paper/        two-column preprint (latexmk -pdf main.tex); figs/ holds the figures and the TikZ method diagram
+paper/        two-column preprint (main.tex) and the anonymous MICCAI/LNCS version generated from it (to_lncs.py -> main_lncs.tex)
 analysis/     tables and figures from results/
   compute_table.py   accuracy vs. per-slide cost for every method and dataset
+  stats.py           paired slide-level bootstrap (95% CI, p) for the main comparisons -> results/stats.md
   fig_paper.py       paper figures
   tcga_agg.py, c17_cases.py, rcc_cases.py   per-class and per-case analyses
   cyto_pilot.py      cervical-cytology go/no-go (private data; not in the paper)
@@ -45,7 +48,8 @@ src/          experiments
   enc_timing.py, io_bench.py   wall-clock measurements
   extra/             earlier variants, not used in the paper
 data_prep/    TCGA manifest + download, tiling and feature extraction (CONCH + EfficientNet-B0), stain shift
-slurm/        Narval job scripts (paths hard-coded to /scratch/ciro/cvpr_lab)
+slurm/        Narval job scripts
+tests/        smoke test on a toy cohort with random features
 results/      per-run JSON / NPZ (selected-tile *_sel.pt files are git-ignored)
 ```
 
@@ -53,11 +57,13 @@ results/      per-run JSON / NPZ (selected-tile *_sel.pt files are git-ignored)
 
 ```bash
 pip install -r requirements.txt
-cd analysis && python compute_table.py && python fig_paper.py   # tables + figures from results/
-cd ../paper && latexmk -pdf main.tex
+bash tests/smoke_test.sh                                        # ~15 s on CPU, no data needed
+cd analysis && python compute_table.py && python fig_paper.py && python stats.py   # tables, figures, significance from results/
+cd ../paper && latexmk -pdf main.tex                            # two-column preprint
+python to_lncs.py && latexmk -pdf main_lncs.tex                 # MICCAI version (edit main.tex, not main_lncs.tex)
 ```
 
-Experiments: `CHEAP=b0 KC=4 python src/exp_tcga.py SEED FOLD rcc|nsclc`, `python src/exp_c17.py SEED FOLD`, `python src/exp_frontier.py SEED FOLD rcc|c17|c16|nsclc` (see `slurm/` for the exact jobs).
+Experiments read features from `$ADV_ROOT/data/<dataset>/` and write to `$ADV_ROOT/studentB_debate/results/` (`ADV_ROOT` defaults to the Narval path). For example: `ADV_ROOT=/path/to/root CHEAP=b0 KC=4 python src/exp_tcga.py SEED FOLD rcc|nsclc`, `python src/exp_c17.py SEED FOLD`, `python src/exp_frontier.py SEED FOLD rcc|c17|c16|nsclc`. See `slurm/` for the exact jobs and `tests/make_toy.py` for the expected feature format.
 
 ## Data
 
@@ -67,8 +73,8 @@ Experiments: `CHEAP=b0 KC=4 python src/exp_tcga.py SEED FOLD rcc|nsclc`, `python
 
 ## Known gaps
 
-- `src/common.py` is imported by `exp_distill.py` and `exp_admil.py` but lives only on Narval (`/scratch/ciro/cvpr_lab/studentB_debate/`), so it still needs copying in.
-- Paths are hard-coded for Narval and need a config before release.
+- `src/common.py` (imported by `exp_distill.py` and `exp_admil.py`, i.e. the CAMELYON16 runs) is still only on Narval and needs copying in. The TCGA, CAMELYON17 and frontier experiments do not need it.
+- Data-preparation scripts still assume the Narval layout.
 - There is no license yet.
 
 ## Citation

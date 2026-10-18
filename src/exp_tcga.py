@@ -5,9 +5,10 @@ Student k: top-Kc tiles by distilled margin (logit_k - max other). Baselines: fu
 attention -> full teacher. Attacks as exp_c17 (one wrong-subtype student / the selector replaced by a white-box attacker).
 Split: 5-fold patient-level stratified CV (FOLD 0-4). usage: CHEAP=b0 KC=4 python exp_tcga.py SEED FOLD COHORT(rcc|nsclc)"""
 import sys, os, json, time, csv, numpy as np, torch, torch.nn as nn, torch.nn.functional as Fn
+ROOT = os.environ.get('ADV_ROOT', '/scratch/ciro/cvpr_lab')  # data/ and studentB_debate/ live under here
 from sklearn.metrics import cohen_kappa_score, balanced_accuracy_score, roc_auc_score
 seed, fold, CO = int(sys.argv[1]), int(sys.argv[2]), sys.argv[3]; CH = os.environ.get('CHEAP', 'b0'); Kc = int(os.environ.get('KC', 4))
-D = f"/scratch/ciro/cvpr_lab/data/tcga_{CO}"; OUT = "/scratch/ciro/cvpr_lab/studentB_debate/results"; DEV = 'cuda'
+D = ROOT + f"/data/tcga_{CO}"; OUT = ROOT + "/studentB_debate/results"; DEV = 'cuda' if torch.cuda.is_available() else 'cpu'
 PR = {'rcc': ['TCGA-KIRC', 'TCGA-KIRP', 'TCGA-KICH'], 'nsclc': ['TCGA-LUAD', 'TCGA-LUSC']}[CO]; C = len(PR)
 torch.manual_seed(seed); rng = np.random.default_rng(seed); t0 = time.time()
 lab, case = {}, {}
