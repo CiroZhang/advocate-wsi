@@ -127,9 +127,40 @@ def admil_wb(i):
         if best is None or Fn.softmax(torch.tensor(v), 0)[y[i]] < Fn.softmax(torch.tensor(best), 0)[y[i]]: best = v
     return best
 L['admil_wb_worst'] = np.stack([admil_wb(i) for i in te])
+EXT = os.environ.get('EXT'); SUF = '_ext' if EXT else ''
+if EXT:  # extended robustness experiments (ext.py): adaptive attack, hybrid presenter, independent per-advocate scorers, weak scorer
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__))); import ext
+    cx = ext.Ctx(XE=XE, extra=lambda i, idx: (P[i][idx] - P[i][idx[0]]) / 5.0, E=2, C=C, y=y, tr=tr, te=te, train=train, predict=predict, rng=rng, DEV=DEV)
+    def fit_g(sub, sd):  # the cheap scorer above, with its own seed and training slides
+        torch.manual_seed(sd); r = np.random.default_rng(sd)
+        h = nn.Sequential(nn.Linear(XC[0].shape[1], 256), nn.ReLU(), nn.Dropout(.1), nn.Linear(256, 256), nn.ReLU(), nn.Linear(256, 2)).to(DEV)
+        op = torch.optim.AdamW(h.parameters(), 5e-4, weight_decay=1e-4)
+        for ep in range(20):
+            h.train()
+            for i in r.permutation(sub):
+                o = h(XC[i].to(DEV)); p = TA[i].to(DEV).softmax(0)
+                loss = ((o[:, 0] - TE[i].to(DEV) / es) ** 2).mean() + (p * (p.clamp_min(1e-12).log() - o[:, 1].log_softmax(0))).sum()
+                op.zero_grad(); loss.backward(); op.step()
+        h.eval()
+        with torch.no_grad(): return {i: h(XC[i].to(DEV)).cpu() for i in range(len(names))}
+    def adv_g(Gd, i):  # students() under scorer Gd
+        e, p = Gd[i][:, 0], P[i]; n = len(e); k = min(Kc, n); t = int(e.argmax()); dd = (p - p[t]).norm(dim=1)
+        near = torch.where(dd <= 2.0)[0]; hi = e.topk(max(k, int(.02 * n))).indices
+        return [(-e).topk(k).indices, dd.topk(k, largest=False).indices, near[e[near].topk(min(k, len(near))).indices], hi[fps(p[hi], k)]]
+    top = lambda Gd, i, k: Gd[i][:, 1].topk(min(k, len(XE[i]))).indices
+    Gs = [fit_g(rng.choice(tr, len(tr)), 100 + c) for c in range(C)]  # bagged, independently seeded
+    wsub = rng.choice(tr, max(3 * C, len(tr) // 10), replace=False); Gw = fit_g(wsub, 200)
+    L['admil_weak'] = predict(fu4, [XE[i][top(Gw, i, K)] for i in te])
+    N = range(len(names))
+    assert all(torch.equal(u, v) for i in list(N)[:20] for u, v in zip(adv_g(G, i), SS[i]))  # refactored rule == students()
+    ext.run(cx, [('x_base', {i: SS[i] for i in N}, True),
+                 (f'x_hyb{Kc}', {i: SS[i] + [top(G, i, Kc)] for i in N}, True),
+                 (f'x_hyb{K}', {i: SS[i] + [top(G, i, K)] for i in N}, True),
+                 ('x_indep', {i: [adv_g(Gs[c], i)[c] for c in range(C)] for i in N}, False),
+                 ('x_weak', {i: adv_g(Gw, i) for i in N}, False)], L, log=lambda t: print('ext', t, f'{time.time() - t0:.0f}s', flush=True))
 res = {k: mets(v) for k, v in L.items()}
 for k, v in res.items(): print(k, {a: round(b, 3) for a, b in v.items()}, flush=True)
-json.dump({'res': res, 'info': {'seed': seed, 'fold': fold, 'cheap': CH, 'Kc': Kc, 'shift': SH, 'n_train': int(len(tr)), 'n_test': int(len(te)),
-           'mean_tiles_test': float(np.mean([len(XE[i]) for i in te]))}}, open(f'{OUT}/c17_{CH}_k{Kc}' + (f'_sh{SH}' if SH else '') + f'_f{fold}_s{seed}.json', 'w'), indent=1)
-np.savez(f'{OUT}/c17_{CH}_k{Kc}' + (f'_sh{SH}' if SH else '') + f'_f{fold}_s{seed}.npz', y=y[te], names=np.array(names)[te], **L)
+json.dump({'res': res, 'info': {'seed': seed, 'fold': fold, 'cheap': CH, 'Kc': Kc, 'shift': SH, 'ext': bool(EXT), 'n_train': int(len(tr)), 'n_test': int(len(te)),
+           'mean_tiles_test': float(np.mean([len(XE[i]) for i in te]))}}, open(f'{OUT}/c17_{CH}_k{Kc}' + (f'_sh{SH}' if SH else '') + f'_f{fold}_s{seed}{SUF}.json', 'w'), indent=1)
+np.savez(f'{OUT}/c17_{CH}_k{Kc}' + (f'_sh{SH}' if SH else '') + f'_f{fold}_s{seed}{SUF}.npz', y=y[te], names=np.array(names)[te], **L)
 print('DONE', f'{time.time() - t0:.0f}s', flush=True)

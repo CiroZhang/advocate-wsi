@@ -129,14 +129,44 @@ def admil_wb(i):
         if best is None or Fn.softmax(torch.tensor(v), 0)[y[i]] < Fn.softmax(torch.tensor(best), 0)[y[i]]: best = v
     return best
 L['admil_wb_worst'] = np.stack([admil_wb(i) for i in te])
+EXT = os.environ.get('EXT'); SUF = '_ext' if EXT else ''
+if EXT:  # extended robustness experiments (ext.py): adaptive attack, hybrid presenter, independent per-advocate scorers, weak scorer
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__))); import ext
+    cx = ext.Ctx(XE=XE, extra=lambda i, idx: torch.zeros(len(idx), 0), E=0, C=C, y=y, tr=tr, te=te, train=train, predict=predict, rng=rng, DEV=DEV)
+    def fit_g(sub, sd):  # the cheap scorer above, with its own seed and training slides
+        torch.manual_seed(sd); r = np.random.default_rng(sd)
+        h = nn.Sequential(nn.Linear(XC[0].shape[1], 256), nn.ReLU(), nn.Dropout(.1), nn.Linear(256, 256), nn.ReLU(), nn.Linear(256, C + 1)).to(DEV)
+        op = torch.optim.AdamW(h.parameters(), 5e-4, weight_decay=1e-4)
+        for ep in range(20):
+            h.train()
+            for i in r.permutation(sub):
+                o = h(XC[i].to(DEV)); p = TA[i].to(DEV).softmax(0)
+                loss = ((o[:, :C] - TE[i].to(DEV) / es) ** 2).mean() + (p * (p.clamp_min(1e-12).log() - o[:, C].log_softmax(0))).sum()
+                op.zero_grad(); loss.backward(); op.step()
+        h.eval()
+        with torch.no_grad(): return {i: h(XC[i].to(DEV)).cpu() for i in range(len(names))}
+    def adv_g(Gd, i):  # students() under scorer Gd
+        e = Gd[i][:, :C]; k = min(Kc, len(e))
+        return [(e[:, c] - torch.cat([e[:, :c], e[:, c + 1:]], 1).max(1).values).topk(k).indices for c in range(C)]
+    top = lambda Gd, i, k: Gd[i][:, C].topk(min(k, len(XE[i]))).indices
+    Gs = [fit_g(rng.choice(tr, len(tr)), 100 + c) for c in range(C)]  # bagged, independently seeded
+    wsub = rng.choice(tr, max(3 * C, len(tr) // 10), replace=False); Gw = fit_g(wsub, 200)
+    L['admil_weak'] = predict(fu4, [XE[i][top(Gw, i, K)] for i in te])
+    N = range(len(names))
+    assert all(torch.equal(u, v) for i in list(N)[:20] for u, v in zip(adv_g(G, i), SS[i]))  # refactored rule == students()
+    ext.run(cx, [('x_base', {i: SS[i] for i in N}, True),
+                 (f'x_hyb{Kc}', {i: SS[i] + [top(G, i, Kc)] for i in N}, True),
+                 (f'x_hyb{K}', {i: SS[i] + [top(G, i, K)] for i in N}, True),
+                 ('x_indep', {i: [adv_g(Gs[c], i)[c] for c in range(C)] for i in N}, False),
+                 ('x_weak', {i: adv_g(Gw, i) for i in N}, False)], L, log=lambda t: print('ext', t, f'{time.time() - t0:.0f}s', flush=True))
 res = {k: mets(v) for k, v in L.items()}
 hq = np.quantile(EXTRA['het'], [1 / 3, 2 / 3]); grp = np.digitize(EXTRA['het'], hq)  # heterogeneity terciles within the test fold
 for k in ['full_conch', 'teach', 'noflag', 'admil', 'percls_full']:
     p = L[k].argmax(1); res[k]['acc_by_het'] = [float((p[grp == g] == y[te][grp == g]).mean()) for g in range(3)]
 for k, v in res.items(): print(k, {a: (round(b, 3) if not isinstance(b, list) else [round(x, 3) for x in b]) for a, b in v.items()}, flush=True)
 json.dump({'res': res, 'info': {'seed': seed, 'fold': fold, 'cheap': CH, 'Kc': Kc, 'cohort': CO, 'n_train': int(len(tr)), 'n_test': int(len(te)),
-           'mean_tiles_test': float(np.mean([len(XE[i]) for i in te]))}}, open(f'{OUT}/tcga_{CO}_{CH}_k{Kc}_f{fold}_s{seed}.json', 'w'), indent=1)
-np.savez(f'{OUT}/tcga_{CO}_{CH}_k{Kc}_f{fold}_s{seed}.npz', y=y[te], names=np.array(names)[te], **L, **EXTRA)
+           'mean_tiles_test': float(np.mean([len(XE[i]) for i in te])), 'ext': bool(EXT)}}, open(f'{OUT}/tcga_{CO}_{CH}_k{Kc}_f{fold}_s{seed}{SUF}.json', 'w'), indent=1)
+np.savez(f'{OUT}/tcga_{CO}_{CH}_k{Kc}_f{fold}_s{seed}{SUF}.npz', y=y[te], names=np.array(names)[te], **L, **EXTRA)
 torch.save({'names': [names[i] for i in te], 'students': [SS[i] for i in te], 'admil': [AD[i] for i in te], 'tile_subtype': [TE[i].argmax(1) for i in te],
-            'att': [TA[i] for i in te]}, f'{OUT}/tcga_{CO}_{CH}_k{Kc}_f{fold}_s{seed}_sel.pt')  # tile indices -> coords in feats/{name}.pt, for case review
+            'att': [TA[i] for i in te]}, f'{OUT}/tcga_{CO}_{CH}_k{Kc}_f{fold}_s{seed}{SUF}_sel.pt')  # tile indices -> coords in feats/{name}.pt, for case review
 print('DONE', f'{time.time() - t0:.0f}s', flush=True)
