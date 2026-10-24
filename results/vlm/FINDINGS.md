@@ -30,3 +30,16 @@ Files: deepeyes_v3_{full,lowres}_partial.jsonl (vlm/de_attack.py), vstar_partial
 
 So the agents span a spectrum. DeepEyes is decorative (reliance ≈ 0, confabulated confirmation). PixelReasoner is weakly load-bearing (+.08). Mini-o3 is load-bearing but notices bad crops. Base Qwen is load-bearing and hijackable (+.19, 45% flips).
 Note: the deepeyes_low_v4 array only ran the GT condition (sbatch split CONDS on its commas); it is rerun as deepeyes_low_v5. PixelReasoner with full-res overview is also running.
+
+### Final V* table (supersedes the partial table above; vlm/agent_analyze.py)
+| agent (overview) | native | GT crop | random crop | blank crop | GT − random | any of 4 adv crops flips a correct answer | no answer, random crop | "confirms" on irrelevant / blank crop |
+|---|---|---|---|---|---|---|---|---|
+| DeepEyes-7B (768²) | .681 | .717 | .694 | .691 | +.024 | .015 | 0% | 88% / 90% |
+| PixelReasoner-RL-7B (768²) | .712 | .733 | .657 | .665 | +.076 | .140 | 0.5% | 12% / 18% |
+| PixelReasoner-RL-7B (full res) | .827 | .838 | .804 | .812 | +.034 | .051 | 0% | 11% / 13% |
+| Mini-o3-7B (768², 186/191) | .849 | .742 | .234 | .183 | +.51 | .690 | 69% | 2% / 2% |
+| Qwen2.5-VL-7B, single crop (letter scoring) | .665 (no crop) | .838 | .644 | – | +.194 | .457 | – | – |
+
+- DeepEyes answers the same with a blank grey crop (.691) as with the right one (.717), and 90% of its blank-crop answers claim the zoom confirms the answer.
+- When Mini-o3 does answer under a wrong crop, it is right about as often as with the GT crop (.75 random / .79 blank vs .84 GT). It doesn't take the bait; it refuses to commit. That is a safe failure mode, but it costs coverage.
+- HR-Bench-4K audit (rand/blank only, no GT boxes) submitted: jobs 7005600-2.

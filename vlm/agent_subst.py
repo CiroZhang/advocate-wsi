@@ -158,26 +158,45 @@ def rollout(im, prompt, crop_fn, n):
     return final, first, boxes, trace, forced
 
 # ------------------------------------------------------------------------------------------------ main
-qs = [json.loads(l) for l in open(f"{VS}/test_questions.jsonl")][SHARD::NSHARD]
-cache = {json.loads(l)['qid']: json.loads(l) for l in open(f"{OUT}/vstar_partial.jsonl")}  # Qwen2.5-VL-7B tile scores (attacker's surrogate)
+DATA = os.environ.get('DATA', 'vstar')  # vstar | hrbench4k (HR-Bench has no GT boxes and no surrogate cache: rand/blank conditions only)
+def load_items():
+    if DATA == 'vstar':
+        for q in [json.loads(l) for l in open(f"{VS}/test_questions.jsonl")]:
+            yield dict(q, qid=q['question_id'], load=lambda q=q: Image.open(f"{VS}/{q['image']}").convert("RGB"),
+                       ann=json.load(open(f"{VS}/{q['image'].replace('.jpg', '.json')}")), y=L.index(q['label']))
+    else:
+        import pandas as pd, base64, io
+        df = pd.read_parquet(f"{R}/hrbench/hr_bench_4k.parquet")
+        df = df[df['cycle_category'] == (df['index'] // 4) % 4]  # one option order per question (same rotation as hr_sel.py)
+        for _, q in df.iterrows():
+            opts = [str(q[c]) for c in "ABCD" if c in q and isinstance(q[c], str)]
+            text = q['question'] + "\n" + "\n".join(f"({L[k]}) {o}" for k, o in enumerate(opts)) + "\nAnswer with the option's letter from the given choices directly."
+            yield dict(qid=str(q['index']), question_id=str(q['index']), category=str(q['category']), text=text, ann={'bbox': []},
+                       load=lambda b=q['image']: Image.open(io.BytesIO(base64.b64decode(b))).convert("RGB"), y=L.index(str(q['answer']).strip()))
+qs = list(load_items())[SHARD::NSHARD]
+cache = {json.loads(l)['qid']: json.loads(l) for l in open(f"{OUT}/vstar_partial.jsonl")} if DATA == 'vstar' else {}  # Qwen2.5-VL-7B tile scores (attacker's surrogate)
 part = f"{OUT}/{TAG}_s{SHARD}of{NSHARD}.jsonl"
 done = {json.loads(l)['qid'] for l in open(part)} if os.path.exists(part) else set()
 fo = open(part, 'a'); t0 = time.time()
 for qi, q in enumerate(qs):
     if q['question_id'] in done: continue
-    im = Image.open(f"{VS}/{q['image']}").convert("RGB"); ann = json.load(open(f"{VS}/{q['image'].replace('.jpg', '.json')}"))
-    y = L.index(q['label']); opts = re.findall(r"^\([A-D]\) (.*)$", q['text'], re.M); stem = q['text'].split("\n")[0]
+    im = q['load'](); ann = q['ann']
+    y = q['y']; opts = re.findall(r"^\([A-D]\) (.*)$", q['text'], re.M); stem = q['text'].split("\n")[0]
     prompt = user_prompt(q, stem, opts)
-    T = tiles(im); c = cache[q['question_id']]; S = np.array(c['S_glob']); assert len(S) == len(T)
-    ov = np.array([max(overlap(t, g) for g in ann['bbox']) for t in T])
-    margin = np.max(np.delete(S, y, 1), 1) - S[:, y]
-    rr = random.Random(int(hashlib.md5(str(q['question_id']).encode()).hexdigest()[:8], 16))
-    subst = {f'adv{i}': int(t) for i, t in enumerate(np.argsort(-margin)[:4])} | {f'rand{i}': int(t) for i, t in enumerate(rr.sample(range(len(T)), 2))} | {'gt': int(ov.argmax()), 'blank': -1}
+    T = tiles(im); rr = random.Random(int(hashlib.md5(str(q['question_id']).encode()).hexdigest()[:8], 16))
+    if DATA == 'vstar':
+        c = cache[q['question_id']]; S = np.array(c['S_glob']); assert len(S) == len(T)
+        ov = np.array([max(overlap(t, g) for g in ann['bbox']) for t in T])
+        margin = np.max(np.delete(S, y, 1), 1) - S[:, y]
+        subst = {f'adv{i}': int(t) for i, t in enumerate(np.argsort(-margin)[:4])} | {f'rand{i}': int(t) for i, t in enumerate(rr.sample(range(len(T)), 2))} | {'gt': int(ov.argmax()), 'blank': -1}
+    else:
+        ov = np.zeros(len(T)); margin = np.full(len(T), np.nan)
+        subst = {f'rand{i}': int(t) for i, t in enumerate(rr.sample(range(len(T)), 2))} | {'blank': -1}
     grey = Image.new('RGB', (448, 448), (128, 128, 128))
     fin, fst, bx, tr, fz = rollout(im, prompt, lambda j, s, b: s.crop(tuple(int(v) for v in b)), 1); torch.cuda.empty_cache()
-    rec = {'qid': q['question_id'], 'cat': q['category'], 'y': y, 'agent': AGENT, 'init_pix': INIT_PIX,
+    rec = {'qid': q['question_id'], 'cat': q['category'], 'y': y, 'data': DATA, 'agent': AGENT, 'init_pix': INIT_PIX,
            'native': {'pred': parse_answer(fin[0], opts), 'pred_first': parse_answer(fst[0], opts) if ('<answer>' in fst[0] or 'boxed{' in fst[0]) else None, 'n_tool': len(bx[0]), 'forced': fz[0],
-                      'boxes': bx[0], 'box_gt_overlap': [max(overlap(b, g) for g in ann['bbox']) for s_, b in bx[0] if s_ == 0], 'first': fst[0][-600:], 'text': fin[0][-400:],
+                      'boxes': bx[0], 'box_gt_overlap': [max([overlap(b, g) for g in ann['bbox']] or [0.0]) for s_, b in bx[0] if s_ == 0], 'first': fst[0][-600:], 'text': fin[0][-400:],
                       'trace': [t[-500:] for t in tr[0]]}}
     names = [k for k in subst if k in CONDS]; outs = []
     for c0 in range(0, len(names), CH):
@@ -189,7 +208,7 @@ for qi, q in enumerate(qs):
             for nm in nms: outs += list(zip(*rollout(im, prompt, lambda j, s, b, nm=nm: grey if subst[nm] < 0 else im.crop(T[subst[nm]]), 1)))
         torch.cuda.empty_cache()
     rec['subst'] = {nm: {'tile': subst[nm], 'tile_gt_overlap': float(ov[subst[nm]]) if subst[nm] >= 0 else 0.0,
-                         'surrogate_margin': float(margin[subst[nm]]) if subst[nm] >= 0 else None,
+                         'surrogate_margin': float(margin[subst[nm]]) if subst[nm] >= 0 and DATA == 'vstar' else None,
                          'pred': parse_answer(o[0], opts), 'n_tool': len(o[2]), 'forced': o[4], 'text': o[0][-300:]} for nm, o in zip(names, outs)}
     fo.write(json.dumps(rec) + "\n"); fo.flush()
     print(qi, q['category'], 'native', rec['native']['pred'] == y, rec['native']['n_tool'], {k: v['pred'] == y for k, v in rec['subst'].items()}, f'{time.time() - t0:.0f}s', flush=True)
