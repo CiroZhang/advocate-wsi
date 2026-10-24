@@ -55,3 +55,21 @@ To be careful: on HR-Bench, DeepEyes' own crops are worth +.065, so "decorative"
 1. Crop reliance of DeepEyes and PixelReasoner is small (≤ .075) compared with Mini-o3 (.5–.67).
 2. DeepEyes' verification language is confabulated: 75–90% of its answers given a blank grey crop say the zoom confirms the answer.
 Mini-o3 HR complete (200 q).
+
+## Attacks on the advocate presenter (vlm/vlm_debate3.py; one compromised selection component, label-aware attacker; 95% bootstrap CI)
+| presenter (judge sees overview + crops) | V* Qwen2.5-VL | V* Qwen3-VL | HR-4K Qwen2.5-VL |
+|---|---|---|---|
+| single selector, honest (coopn) | .812 | .911 | .690 |
+| single selector, compromised (attn) | .366 [.30,.45] | .335 [.27,.40] | .390 [.33,.46] |
+| advocates (nway), honest | .806 | .843 | .705 |
+| advocates, TRUE option's advocate compromised (nway_cy) | .408 | .408 | .460 |
+| advocates, true advocate silenced (nway_drop) | .419 | .387 | .475 |
+| **hybrid** (advocates + neutral slot), honest | **.822** | **.880** | **.720** |
+| hybrid, true advocate compromised (hyb_cy) | .733 [.67,.79] | .859 [.81,.91] | .675 [.61,.74] |
+| hybrid, neutral slot compromised (hyb_cn) | .764 [.70,.82] | .801 [.75,.85] | .675 [.61,.74] |
+
+- Being honest: **pure advocates are NOT robust** when the attacker controls the one advocate that matters (true option). Accuracy drops to .39–.48, about as bad as a compromised single selector, because the judge then sees only the wrong options' evidence.
+- **The hybrid presenter is robust to any single compromised component.**
+  - Worst case is .73 / .80 / .68, against .37 / .34 / .39 for a compromised single selector.
+  - Clean accuracy is equal or better than the single selector (.822 vs .812, .720 vs .690), except Qwen3 (.880 vs .911).
+- This matches pathology, where the hybrid closes the clean gap and holds .71–.78 under adaptive attack. **The method of the paper should be the hybrid (redundant, independent evidence channels), not advocates alone.**
