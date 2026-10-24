@@ -49,9 +49,9 @@ Note: the deepeyes_low_v4 array only ran the GT condition (sbatch split CONDS on
 |---|---|---|---|---|---|
 | DeepEyes | −.010 [−.037, +.010] | **+.065 [+.030, +.105]** | .695 / .630 / .630 | 69% / 75% | 1.5% |
 | PixelReasoner | +.047 [+.010, +.084] | +.045 [+.010, +.080] | .655 / .610 / .610 | 15% / 13% | 1.5% |
-| Mini-o3 (V* 191; HR 19/200 so far) | +.670 [+.597, +.733] | +.63 [+.42, +.84] | .895 / .316 / .263 | 3% / 5% | 58% |
+| Mini-o3 | +.670 [+.597, +.733] | +.520 [+.455, +.595] | .700 / .230 / .180 | 2% / 1.5% | 68% |
 
 To be careful: on HR-Bench, DeepEyes' own crops are worth +.065, so "decorative" holds on V* but only partly on HR-Bench. The claims that hold on both benchmarks:
 1. Crop reliance of DeepEyes and PixelReasoner is small (≤ .075) compared with Mini-o3 (.5–.67).
 2. DeepEyes' verification language is confabulated: 75–90% of its answers given a blank grey crop say the zoom confirms the answer.
-Mini-o3 HR (job 7012799) is still running (~4 h).
+Mini-o3 HR complete (200 q).
