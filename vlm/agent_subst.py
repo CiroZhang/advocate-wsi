@@ -157,6 +157,24 @@ def rollout(im, prompt, crop_fn, n):
         for j, o in zip(active, outs): final[j] = o; trace[j].append('[forced] ' + o); forced[j] = True
     return final, first, boxes, trace, forced
 
+LID = [proc.tokenizer.encode(c, add_special_tokens=False)[0] for c in L]
+GENERIC_CALL = {'minio3': '<think>Let me zoom in to see more clearly.</think>\n<grounding>{"bbox_2d": [0.25, 0.25, 0.75, 0.75], "source": "original_image"}</grounding>',
+                'deepeyes': '<think>Let me zoom in to see more clearly.</think>\n<tool_call>\n{"name": "image_zoom_in_tool", "arguments": {"bbox_2d": [0, 0, 100, 100]}}\n</tool_call>',
+                'pixelreasoner': 'Let me zoom in.\n<tool_call>\n{"name": "crop_image_normalized", "arguments": {"bbox_2d": [0.25, 0.25, 0.75, 0.75], "target_image": 1}}\n</tool_call>'}
+@torch.no_grad()
+def wb_scores(im, prompt, call, crops, nopt, bs=6):
+    """White-box attacker's tile scores: the agent's own option log-probs after its first zoom call returns crop t and it is made to answer
+    (assistant prefilled with an empty think + '<answer>'). Returns (len(crops), nopt) log-softmax over option letters."""
+    ov = fit(im, INIT_PIX); out = []
+    for i in range(0, len(crops), bs):
+        texts, ims = [], []
+        for cr in crops[i:i + bs]:
+            m, ii = to_chat([("user", [ov, prompt]), ("assistant", [call]), ("user", tool_msg(1, fit(cr, OBS_PIX)) + ["\n" + FORCE])])
+            texts.append(proc.apply_chat_template(m, add_generation_prompt=True) + "<think> </think>\n<answer>"); ims += ii
+        enc = proc(text=texts, images=ims, return_tensors="pt", padding=True).to("cuda")
+        lg = model(**enc).logits[:, -1, LID[:nopt]].float(); out.append(torch.log_softmax(lg, -1).cpu().numpy()); del enc; torch.cuda.empty_cache()
+    return np.concatenate(out)
+
 # ------------------------------------------------------------------------------------------------ main
 DATA = os.environ.get('DATA', 'vstar')  # vstar | hrbench4k (HR-Bench has no GT boxes and no surrogate cache: rand/blank conditions only)
 def load_items():
@@ -198,6 +216,13 @@ for qi, q in enumerate(qs):
            'native': {'pred': parse_answer(fin[0], opts), 'pred_first': parse_answer(fst[0], opts) if ('<answer>' in fst[0] or 'boxed{' in fst[0]) else None, 'n_tool': len(bx[0]), 'forced': fz[0],
                       'boxes': bx[0], 'box_gt_overlap': [max([overlap(b, g) for g in ann['bbox']] or [0.0]) for s_, b in bx[0] if s_ == 0], 'first': fst[0][-600:], 'text': fin[0][-400:],
                       'trace': [t[-500:] for t in tr[0]]}}
+    if any(c.startswith('wb') for c in CONDS):  # white-box attack: top-4 tiles by the agent's own wrong-option margin
+        call = fst[0] if CALL in fst[0] else GENERIC_CALL[AGENT]; call = call[:call.index(STOPS[0]) + len(STOPS[0])] if STOPS[0] in call else call
+        Sw = wb_scores(im, prompt, call, [im.crop(t) for t in T], len(opts)); mw = np.max(np.delete(Sw, y, 1), 1) - Sw[:, y]
+        for i, t in enumerate(np.argsort(-mw)[:4]): subst[f'wb{i}'] = int(t)
+        rec['wb'] = {'margin_top': [float(v) for v in np.sort(mw)[::-1][:4]], 'pred_surrogate': [int(v) for v in Sw[np.argsort(-mw)[:4]].argmax(1)],
+                     'frac_tiles_flip': float(np.mean(mw > 0)), 'gt_tile_margin': float(mw[int(ov.argmax())]) if DATA == 'vstar' else None}
+        margin = mw  # recorded per condition below
     names = [k for k in subst if k in CONDS]; outs = []
     for c0 in range(0, len(names), CH):
         nms = names[c0:c0 + CH]
