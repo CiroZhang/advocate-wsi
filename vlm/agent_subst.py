@@ -6,7 +6,7 @@ Each agent runs its own official multi-turn zoom protocol. Per question:
             (black-box transfer, from vstar_partial.jsonl); blank = a uniform grey image (no visual content at all).
 If the zoom is load-bearing, gt > rand > blank and adv flips answers; if it is decorative, all are equal to native.
 We also store the first-turn text (before any zoom) to measure whether the answer is committed before looking.
-env: AGENT=deepeyes|minio3, INIT_PIX (overview pixel budget), TAG, SHARD/NSHARD (question shards), CH (rollouts per batch).
+env: AGENT=deepeyes|minio3|pixelreasoner, INIT_PIX (overview pixel budget), TAG, SHARD/NSHARD (question shards), CH (rollouts per batch).
 usage: AGENT=minio3 TAG=minio3_full python agent_subst.py"""
 import os, sys, json, re, math, time, random, hashlib, numpy as np, torch
 from PIL import Image
@@ -45,6 +45,24 @@ elif AGENT == 'minio3':  # Mini-o3 (github Mini-o3/Mini-o3: verl/trainer/constan
         if not m: return None
         src = m.group(5); o = 0 if src == 'original_image' else int(re.match(r"observation_(\d+)", src).group(1)) if re.match(r"observation_(\d+)", src) else 0
         return [float(v) for v in m.groups()[:4]], o
+elif AGENT == 'pixelreasoner':  # PixelReasoner-RL-v1 (github TIGER-AI-Lab/Pixel-Reasoner, curiosity_driven_rl/openrlhf/trainer/ppo_utils/experience_maker.py, sys=vcot eval)
+    MP = "PixelReasoner-RL-v1"; MAX_TURNS, MAX_NEW = 4, 1024; INIT_PIX = int(os.environ.get("INIT_PIX", 16384 * 28 * 28)); OBS_PIX = 5120 * 28 * 28
+    SYS = ("You are a helpful assistant.\n\n# Tools\n\nYou may call one or more functions to assist with the user query.\n\nYou are provided with function signatures within <tools></tools> XML tags:\n<tools>\n"
+           '{"type": "function", "function": {"name": "crop_image_normalized", "description": "Zoom in on the image based on the bounding box coordinates. It is useful when the object or text in the image is too small to be seen.", '
+           '"parameters": {"type": "object", "properties": {"bbox_2d": {"type": "array", "description": "coordinates for bounding box of the area you want to zoom in. minimum value is 0 and maximum value is 1.", "items": {"type": "number"}}, '
+           '"target_image": {"type": "number", "description": "The index of the image to crop. Index from 1 to the number of images. Choose 1 to operate on original image."}}, "required": ["bbox_2d", "target_image"]}}}\n</tools>\n\n'
+           'For each function call, return a json object with function name and arguments within <tool_call></tool_call> XML tags:\n<tool_call>\n{"name": <function-name>, "arguments": <args-json-object>}\n</tool_call>')
+    VCOT = ("\n\nGuidelines: Understand the given visual information and the user query. Determine if it is beneficial to employ the given visual operations (tools). For a video, we can look closer by `select_frames`. "
+            "For an image, we can look closer by `crop_image`. Reason with the visual information step by step, and put your final answer within \\boxed{}.")
+    STOPS = ["</tool_call>"]; CALL = "<tool_call>"; REL = True; PAD = 0.1
+    def user_prompt(q, stem, opts): return f"{stem}\nchoices:\n" + "".join(f"{L[k]}: {o}\n" for k, o in enumerate(opts)) + VCOT
+    def tool_msg(turn, crop): return [f"\nHere is the cropped image (Image Size: {crop.size[0]}x{crop.size[1]}):", crop]
+    def parse_call(s):
+        try:
+            a = json.loads(s.split("<tool_call>")[-1].split("</tool_call>")[0])['arguments']; v = [float(x) for x in a['bbox_2d']]
+            if not all(x <= 1 for x in v): return None
+            return [v[0] - PAD, v[1] - PAD, v[2] + PAD, v[3] + PAD], max(0, int(a.get('target_image', 1)) - 1)
+        except Exception: return None
 else: raise ValueError(AGENT)
 proc = AutoProcessor.from_pretrained(f"{R}/{MP}"); proc.tokenizer.padding_side = 'left'
 model = AutoModelForImageTextToText.from_pretrained(f"{R}/{MP}", dtype=torch.bfloat16, device_map="cuda").eval()
@@ -70,7 +88,7 @@ def to_box(v, src_im, shown_size):  # model coordinates -> pixel box in src_im
     if y2 - y1 < 28: y2 = min(H, y1 + 28); y1 = max(0, y2 - 28)
     return [x1, y1, x2, y2]
 def parse_answer(s, opts):
-    m = re.search(r"<answer>(.*?)</answer>", s, re.S)
+    m = re.search(r"<answer>(.*?)</answer>", s, re.S) or re.search(r"\\boxed\{([^}]*)\}", s)
     a = (m.group(1) if m else s[-200:]).strip()
     m2 = re.match(r"^\(?([A-D])[\).:\s]|^\(?([A-D])\)?$", a)
     if m2: return L.index(m2.group(1) or m2.group(2))
@@ -124,7 +142,7 @@ def rollout(im, prompt, crop_fn, n):
         for j, o in zip(active, outs):
             final[j] = o; trace[j].append(o)
             if turn == 0: first[j] = o
-            if "</answer>" in o or CALL not in o: continue
+            if "</answer>" in o or "boxed{" in o.split(CALL)[0] or CALL not in o: continue
             pc = parse_call(o)
             if pc is None: continue
             v, src = pc; src = min(src, len(obs[j]) - 1); s_im, s_sz = obs[j][src]
@@ -154,7 +172,7 @@ for qi, q in enumerate(qs):
     grey = Image.new('RGB', (448, 448), (128, 128, 128))
     fin, fst, bx, tr = rollout(im, prompt, lambda j, s, b: s.crop(tuple(int(v) for v in b)), 1); torch.cuda.empty_cache()
     rec = {'qid': q['question_id'], 'cat': q['category'], 'y': y, 'agent': AGENT, 'init_pix': INIT_PIX,
-           'native': {'pred': parse_answer(fin[0], opts), 'pred_first': parse_answer(fst[0], opts) if '<answer>' in fst[0] else None, 'n_tool': len(bx[0]),
+           'native': {'pred': parse_answer(fin[0], opts), 'pred_first': parse_answer(fst[0], opts) if ('<answer>' in fst[0] or 'boxed{' in fst[0]) else None, 'n_tool': len(bx[0]),
                       'boxes': bx[0], 'box_gt_overlap': [max(overlap(b, g) for g in ann['bbox']) for s_, b in bx[0] if s_ == 0], 'first': fst[0][-600:], 'text': fin[0][-400:],
                       'trace': [t[-500:] for t in tr[0]]}}
     names = list(subst); outs = []
