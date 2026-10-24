@@ -73,7 +73,6 @@ Experiments read features from `$ADV_ROOT/data/<dataset>/` and write to `$ADV_RO
 
 ## Known gaps
 
-- `src/common.py` (imported by `exp_distill.py` and `exp_admil.py`, i.e. the CAMELYON16 runs) is still only on Narval and needs copying in. The TCGA, CAMELYON17 and frontier experiments do not need it.
 - Data-preparation scripts still assume the Narval layout.
 - There is no license yet.
 
