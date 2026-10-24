@@ -1,0 +1,141 @@
+{
+ "res": {
+  "full_conch": {
+   "acc": 0.86,
+   "balacc": 0.6888917004048583,
+   "kappa": 0.9339803261371888,
+   "tumour_balacc": 0.9125
+  },
+  "teach": {
+   "acc": 0.83,
+   "balacc": 0.582995951417004,
+   "kappa": 0.9173501176171404,
+   "tumour_balacc": 0.8625
+  },
+  "teach_wb_worst": {
+   "acc": 0.62,
+   "balacc": 0.42624831309041833,
+   "kappa": 0.8488745980707395,
+   "tumour_balacc": 0.7291666666666666
+  },
+  "noflag": {
+   "acc": 0.83,
+   "balacc": 0.5890688259109312,
+   "kappa": 0.9156446693919927,
+   "tumour_balacc": 0.8625
+  },
+  "noflag_wb_worst": {
+   "acc": 0.73,
+   "balacc": 0.4511808367071525,
+   "kappa": 0.8714568226763348,
+   "tumour_balacc": 0.8458333333333333
+  },
+  "admil": {
+   "acc": 0.83,
+   "balacc": 0.5890688259109312,
+   "kappa": 0.9251789199739753,
+   "tumour_balacc": 0.875
+  },
+  "admil_wb_worst": {
+   "acc": 0.48,
+   "balacc": 0.2,
+   "kappa": -0.09875203472599048,
+   "tumour_balacc": 0.4
+  },
+  "admil_weak": {
+   "acc": 0.82,
+   "balacc": 0.569838056680162,
+   "kappa": 0.9132947976878613,
+   "tumour_balacc": 0.8625
+  },
+  "x_base": {
+   "acc": 0.84,
+   "balacc": 0.6082995951417004,
+   "kappa": 0.9180435352740624,
+   "tumour_balacc": 0.8625
+  },
+  "x_base_wb": {
+   "acc": 0.74,
+   "balacc": 0.48839406207827263,
+   "kappa": 0.8771419333979955,
+   "tumour_balacc": 0.8291666666666666
+  },
+  "x_base_ad": {
+   "acc": 0.63,
+   "balacc": 0.42457827260458836,
+   "kappa": 0.8013834668858297,
+   "tumour_balacc": 0.7416666666666667
+  },
+  "x_hyb4": {
+   "acc": 0.81,
+   "balacc": 0.5506072874493927,
+   "kappa": 0.9109924343569203,
+   "tumour_balacc": 0.8625
+  },
+  "x_hyb4_wb": {
+   "acc": 0.7,
+   "balacc": 0.4656545209176788,
+   "kappa": 0.8746786632390746,
+   "tumour_balacc": 0.7958333333333334
+  },
+  "x_hyb4_ad": {
+   "acc": 0.66,
+   "balacc": 0.4310053981106613,
+   "kappa": 0.8396386961644193,
+   "tumour_balacc": 0.7791666666666667
+  },
+  "x_hyb16": {
+   "acc": 0.82,
+   "balacc": 0.5879301619433198,
+   "kappa": 0.9217170069802335,
+   "tumour_balacc": 0.8875
+  },
+  "x_hyb16_wb": {
+   "acc": 0.64,
+   "balacc": 0.4528002699055331,
+   "kappa": 0.8468971148611868,
+   "tumour_balacc": 0.7583333333333333
+  },
+  "x_hyb16_ad": {
+   "acc": 0.59,
+   "balacc": 0.42297570850202426,
+   "kappa": 0.8260627565574341,
+   "tumour_balacc": 0.725
+  },
+  "x_indep": {
+   "acc": 0.81,
+   "balacc": 0.5506072874493927,
+   "kappa": 0.8854305900324614,
+   "tumour_balacc": 0.85
+  },
+  "x_indep_wb": {
+   "acc": 0.73,
+   "balacc": 0.48714574898785423,
+   "kappa": 0.8316605259814509,
+   "tumour_balacc": 0.8
+  },
+  "x_weak": {
+   "acc": 0.79,
+   "balacc": 0.5060728744939271,
+   "kappa": 0.8493396589306321,
+   "tumour_balacc": 0.8125
+  },
+  "x_weak_wb": {
+   "acc": 0.63,
+   "balacc": 0.406359649122807,
+   "kappa": 0.6870009581603322,
+   "tumour_balacc": 0.7041666666666666
+  }
+ },
+ "info": {
+  "seed": 2,
+  "fold": 3,
+  "cheap": "b0",
+  "Kc": 4,
+  "shift": null,
+  "ext": true,
+  "n_train": 400,
+  "n_test": 100,
+  "mean_tiles_test": 2043.54
+ }
+}

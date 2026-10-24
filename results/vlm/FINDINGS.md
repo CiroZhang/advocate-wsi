@@ -18,3 +18,15 @@ Dilemma: a zoom is either load-bearing and attackable (base VLM + external selec
 Caveats/todo: one RL agent so far; adversarial tiles for DeepEyes are transfer, not white-box (but GT and random also have no effect, so this is about reliance, not attack strength); letter-scoring (Qwen) vs generation (DeepEyes) protocols differ; lit check for prior "thinking-with-images faithfulness" work not done yet.
 
 Files: deepeyes_v3_{full,lowres}_partial.jsonl (vlm/de_attack.py), vstar_partial.jsonl / vstar_q3_partial.jsonl (vlm/vstar_sel.py), *_deb2.jsonl (vlm/vlm_debate2.py).
+
+## Update 2026-10-24 night: three RL agents (crop-substitution audit, vlm/agent_subst.py, 768² overview, V* 191 q)
+| agent | native | +GT crop | +random crop | GT − random | blank crop | adv flips a correct answer | "confirms" on irrelevant crop | no answer on random crop |
+|---|---|---|---|---|---|---|---|---|
+| DeepEyes-7B (v3, de_attack.py) | .681 | .707 | .702 | +.005 | (v5 running) | .031 | 86% | 0% |
+| PixelReasoner-RL-7B | .712 | .733 | .657 | +.076 | .665 | .140 | 12% | 0.5% |
+| Mini-o3-7B (77/191 so far, 6 turns + forced answer) | .857 | .779 | .097 | +.68* | .026 | .879* | 2% | 86% |
+
+\* Mini-o3 rarely answers under a wrong crop: it keeps re-zooming (5.8 calls on average) and ignores the forced-answer message. Its accuracy among answered questions is .90 (GT), .64 (random), .40 (blank). It treats the crop as evidence and searches when the crop is wrong, which is the behavior we want. The "flip" number is mostly abstention, not hijacking.
+
+So the agents span a spectrum. DeepEyes is decorative (reliance ≈ 0, confabulated confirmation). PixelReasoner is weakly load-bearing (+.08). Mini-o3 is load-bearing but notices bad crops. Base Qwen is load-bearing and hijackable (+.19, 45% flips).
+Note: the deepeyes_low_v4 array only ran the GT condition (sbatch split CONDS on its commas); it is rerun as deepeyes_low_v5. PixelReasoner with full-res overview is also running.

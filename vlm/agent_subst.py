@@ -12,7 +12,7 @@ import os, sys, json, re, math, time, random, hashlib, numpy as np, torch
 from PIL import Image
 from transformers import AutoProcessor, AutoModelForImageTextToText
 R = os.environ.get('HF_ROOT', "/scratch/ciro/cvpr_lab/hf"); VS = f"{R}/vstar_bench"; OUT = os.environ.get('OUT', "/scratch/ciro/cvpr_lab/paperA_vstar")
-AGENT = os.environ.get('AGENT', 'minio3'); TAG = os.environ.get('TAG', AGENT); CH = int(os.environ.get('CH', 1)); CONDS = os.environ.get('CONDS', 'gt,rand0,rand1,adv0,blank').split(',')
+AGENT = os.environ.get('AGENT', 'minio3'); TAG = os.environ.get('TAG', AGENT); CH = int(os.environ.get('CH', 1)); CONDS = re.split(r'[,+]', os.environ.get('CONDS', 'gt,rand0,rand1,adv0,blank'))  # '+' also accepted: sbatch --export splits on commas
 SHARD, NSHARD = int(os.environ.get('SHARD', 0)), int(os.environ.get('NSHARD', 1))
 L = "ABCD"; random.seed(0); torch.manual_seed(0)
 

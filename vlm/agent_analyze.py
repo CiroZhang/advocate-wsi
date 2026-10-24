@@ -18,7 +18,11 @@ def summarize(path):
     if has('blank'): out['blank'] = acc('blank')
     if 'pred_first' in R[0]['native']:
         out['first_turn_answer'] = np.mean([r['native']['pred_first'] is not None for r in R])
-    off = [r['subst'][k]['text'] for r in R for k in ('rand0', 'rand1') if r['subst'][k].get('tile_gt_overlap', 1) == 0]
+    for k in ('gt', 'rand0', 'blank'):  # abstention (no parsable answer) and accuracy among answered, per condition
+        if has(k):
+            P = [(r['subst'][k]['pred'], r['y']) for r in R]; out[f'noans_{k}'] = np.mean([p == -1 for p, _ in P])
+            out[f'acc_answered_{k}'] = np.mean([p == y for p, y in P if p != -1]) if any(p != -1 for p, _ in P) else float('nan')
+    off = [r['subst'][k]['text'] for r in R for k in ('rand0', 'rand1') if k in r['subst'] and r['subst'][k].get('tile_gt_overlap', 1) == 0]
     out['confirm_on_irrelevant_crop'] = np.mean([bool(CONF.search(t)) for t in off]) if off else float('nan')
     if has('blank'): out['confirm_on_blank'] = np.mean([bool(CONF.search(r['subst']['blank']['text'])) for r in R])
     return out
