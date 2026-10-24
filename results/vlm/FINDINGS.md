@@ -37,7 +37,7 @@ Note: the deepeyes_low_v4 array only ran the GT condition (sbatch split CONDS on
 | DeepEyes-7B (768²) | .681 | .717 | .694 | .691 | +.024 | .015 | 0% | 88% / 90% |
 | PixelReasoner-RL-7B (768²) | .712 | .733 | .657 | .665 | +.076 | .140 | 0.5% | 12% / 18% |
 | PixelReasoner-RL-7B (full res) | .827 | .838 | .804 | .812 | +.034 | .051 | 0% | 11% / 13% |
-| Mini-o3-7B (768², 186/191) | .849 | .742 | .234 | .183 | +.51 | .690 | 69% | 2% / 2% |
+| Mini-o3-7B (768²) | .848 | .743 | .228 | .178 | +.52 | .691 | 70% | 2% / 2% |
 | Qwen2.5-VL-7B, single crop (letter scoring) | .665 (no crop) | .838 | .644 | – | +.194 | .457 | – | – |
 
 - DeepEyes answers the same with a blank grey crop (.691) as with the right one (.717), and 90% of its blank-crop answers claim the zoom confirms the answer.

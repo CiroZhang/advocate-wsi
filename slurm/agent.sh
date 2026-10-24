@@ -10,6 +10,7 @@
 #SBATCH --output=/scratch/ciro/cvpr_lab/runs/%x_%A_%a.log
 echo "start $(date +%T) $(hostname) AGENT=$AGENT TAG=$TAG shard $SLURM_ARRAY_TASK_ID/$NSHARD"
 module load StdEnv/2023 python/3.11
+[ "$DATA" = hrbench4k ] && module load gcc arrow/23.0.1  # pyarrow for the HR-Bench parquet
 source /scratch/ciro/cvpr_lab/venv/bin/activate
 export HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1
 cd /scratch/ciro/cvpr_lab/vlm2
