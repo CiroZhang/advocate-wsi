@@ -6,13 +6,13 @@ Each agent runs its own official multi-turn zoom protocol. Per question:
             (black-box transfer, from vstar_partial.jsonl); blank = a uniform grey image (no visual content at all).
 If the zoom is load-bearing, gt > rand > blank and adv flips answers; if it is decorative, all are equal to native.
 We also store the first-turn text (before any zoom) to measure whether the answer is committed before looking.
-env: AGENT=deepeyes|minio3|pixelreasoner, INIT_PIX (overview pixel budget), TAG, SHARD/NSHARD (question shards), CH (rollouts per batch).
+env: AGENT=deepeyes|minio3|pixelreasoner, CONDS (substitution conditions, default gt,rand0,rand1,adv0,blank), INIT_PIX (overview pixel budget), TAG, SHARD/NSHARD (question shards), CH (rollouts per batch).
 usage: AGENT=minio3 TAG=minio3_full python agent_subst.py"""
 import os, sys, json, re, math, time, random, hashlib, numpy as np, torch
 from PIL import Image
 from transformers import AutoProcessor, AutoModelForImageTextToText
 R = os.environ.get('HF_ROOT', "/scratch/ciro/cvpr_lab/hf"); VS = f"{R}/vstar_bench"; OUT = os.environ.get('OUT', "/scratch/ciro/cvpr_lab/paperA_vstar")
-AGENT = os.environ.get('AGENT', 'minio3'); TAG = os.environ.get('TAG', AGENT); CH = int(os.environ.get('CH', 3))
+AGENT = os.environ.get('AGENT', 'minio3'); TAG = os.environ.get('TAG', AGENT); CH = int(os.environ.get('CH', 1)); CONDS = os.environ.get('CONDS', 'gt,rand0,rand1,adv0,blank').split(',')
 SHARD, NSHARD = int(os.environ.get('SHARD', 0)), int(os.environ.get('NSHARD', 1))
 L = "ABCD"; random.seed(0); torch.manual_seed(0)
 
@@ -28,7 +28,7 @@ if AGENT == 'deepeyes':  # official DeepEyes V* eval (as de_attack.py v3)
         m = re.search(r"bbox_2d\"?\s*:\s*\[\s*(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)\s*,\s*(-?\d+\.?\d*)", s)
         return ([float(v) for v in m.groups()], 0) if m else None
 elif AGENT == 'minio3':  # Mini-o3 (github Mini-o3/Mini-o3: verl/trainer/constants.py, vllm_rollout_spmd.py; relative coords, raw-image crops)
-    MP = "Mini-o3-7B-v1"; MAX_TURNS, MAX_NEW = int(os.environ.get('MAX_TURNS', 8)), 1024; INIT_PIX = int(os.environ.get("INIT_PIX", 2000000)); OBS_PIX = 2000000
+    MP = "Mini-o3-7B-v1"; MAX_TURNS, MAX_NEW = int(os.environ.get('MAX_TURNS', 6)), 1024; INIT_PIX = int(os.environ.get("INIT_PIX", 2000000)); OBS_PIX = int(os.environ.get("OBS_PIX", 2000000))
     SYS = ("You are a helpful assistant. Answer the user's question based on the image provided. Output your thinking process within the <think> and </think> tags. "
            "Whenever you find anything unclear, you can zoom in a specific region in the given image to see more clearly by outputing <grounding>{\"bbox_2d\": [x0, y0, x1, y1], "
            "\"source\": \"original_image\"}</grounding>, where (x0, y0) and (x1, y1) are the top-left and bottom-right coordinates of the region that you want to zoom in, "
@@ -64,8 +64,9 @@ elif AGENT == 'pixelreasoner':  # PixelReasoner-RL-v1 (github TIGER-AI-Lab/Pixel
             return [v[0] - PAD, v[1] - PAD, v[2] + PAD, v[3] + PAD], max(0, int(a.get('target_image', 1)) - 1)
         except Exception: return None
 else: raise ValueError(AGENT)
+FORCE = "You have reached the maximum number of zoom-in operations. Do not zoom in again. Give your final answer now in the required format."
 proc = AutoProcessor.from_pretrained(f"{R}/{MP}"); proc.tokenizer.padding_side = 'left'
-model = AutoModelForImageTextToText.from_pretrained(f"{R}/{MP}", dtype=torch.bfloat16, device_map="cuda").eval()
+model = AutoModelForImageTextToText.from_pretrained(f"{R}/{MP}", dtype=torch.bfloat16, device_map="cuda", attn_implementation="sdpa").eval()
 if AGENT == 'deepeyes' and SYS is None:  # reuse the exact system prompt of de_attack.py
     src = open(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'de_attack.py')).read(); SYS = re.search(r'SYS = """(.*?)"""', src, re.S).group(1)
 
@@ -135,7 +136,7 @@ def rollout(im, prompt, crop_fn, n):
     """n parallel rollouts; crop_fn(j, src_image, box) -> PIL returned to rollout j. Returns final texts, first-turn texts, requested boxes."""
     ov = fit(im, INIT_PIX); convs = [[("user", [ov, prompt])] for _ in range(n)]
     obs = [[(im, ov.size)] for _ in range(n)]  # observation 0 = original image (shown at ov.size); later = crops
-    active = list(range(n)); final, first, boxes, trace = [""] * n, [""] * n, [[] for _ in range(n)], [[] for _ in range(n)]
+    active = list(range(n)); final, first, boxes, trace, forced = [""] * n, [""] * n, [[] for _ in range(n)], [[] for _ in range(n)], [False] * n
     for turn in range(MAX_TURNS):
         if not active: break
         outs = gen([convs[j] for j in active]); nxt = []
@@ -151,7 +152,10 @@ def rollout(im, prompt, crop_fn, n):
             convs[j] += [("assistant", [o]), ("user", tool_msg(turn + 1, crs))]
             nxt.append(j)
         active = nxt
-    return final, first, boxes, trace
+    if active:  # turn limit reached while still zooming: ask for the final answer (no more tools), as an evaluation harness must
+        outs = gen([convs[j][:-1] + [("user", convs[j][-1][1] + ["\n" + FORCE])] for j in active])  # last message is the tool response
+        for j, o in zip(active, outs): final[j] = o; trace[j].append('[forced] ' + o); forced[j] = True
+    return final, first, boxes, trace, forced
 
 # ------------------------------------------------------------------------------------------------ main
 qs = [json.loads(l) for l in open(f"{VS}/test_questions.jsonl")][SHARD::NSHARD]
@@ -170,12 +174,12 @@ for qi, q in enumerate(qs):
     rr = random.Random(int(hashlib.md5(str(q['question_id']).encode()).hexdigest()[:8], 16))
     subst = {f'adv{i}': int(t) for i, t in enumerate(np.argsort(-margin)[:4])} | {f'rand{i}': int(t) for i, t in enumerate(rr.sample(range(len(T)), 2))} | {'gt': int(ov.argmax()), 'blank': -1}
     grey = Image.new('RGB', (448, 448), (128, 128, 128))
-    fin, fst, bx, tr = rollout(im, prompt, lambda j, s, b: s.crop(tuple(int(v) for v in b)), 1); torch.cuda.empty_cache()
+    fin, fst, bx, tr, fz = rollout(im, prompt, lambda j, s, b: s.crop(tuple(int(v) for v in b)), 1); torch.cuda.empty_cache()
     rec = {'qid': q['question_id'], 'cat': q['category'], 'y': y, 'agent': AGENT, 'init_pix': INIT_PIX,
-           'native': {'pred': parse_answer(fin[0], opts), 'pred_first': parse_answer(fst[0], opts) if ('<answer>' in fst[0] or 'boxed{' in fst[0]) else None, 'n_tool': len(bx[0]),
+           'native': {'pred': parse_answer(fin[0], opts), 'pred_first': parse_answer(fst[0], opts) if ('<answer>' in fst[0] or 'boxed{' in fst[0]) else None, 'n_tool': len(bx[0]), 'forced': fz[0],
                       'boxes': bx[0], 'box_gt_overlap': [max(overlap(b, g) for g in ann['bbox']) for s_, b in bx[0] if s_ == 0], 'first': fst[0][-600:], 'text': fin[0][-400:],
                       'trace': [t[-500:] for t in tr[0]]}}
-    names = list(subst); outs = []
+    names = [k for k in subst if k in CONDS]; outs = []
     for c0 in range(0, len(names), CH):
         nms = names[c0:c0 + CH]
         fn = lambda j, s, b, nms=nms: grey if subst[nms[j]] < 0 else im.crop(T[subst[nms[j]]])
@@ -186,7 +190,7 @@ for qi, q in enumerate(qs):
         torch.cuda.empty_cache()
     rec['subst'] = {nm: {'tile': subst[nm], 'tile_gt_overlap': float(ov[subst[nm]]) if subst[nm] >= 0 else 0.0,
                          'surrogate_margin': float(margin[subst[nm]]) if subst[nm] >= 0 else None,
-                         'pred': parse_answer(o[0], opts), 'n_tool': len(o[2]), 'text': o[0][-300:]} for nm, o in zip(names, outs)}
+                         'pred': parse_answer(o[0], opts), 'n_tool': len(o[2]), 'forced': o[4], 'text': o[0][-300:]} for nm, o in zip(names, outs)}
     fo.write(json.dumps(rec) + "\n"); fo.flush()
     print(qi, q['category'], 'native', rec['native']['pred'] == y, rec['native']['n_tool'], {k: v['pred'] == y for k, v in rec['subst'].items()}, f'{time.time() - t0:.0f}s', flush=True)
 print('DONE', flush=True)
