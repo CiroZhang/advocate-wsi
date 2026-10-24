@@ -15,11 +15,11 @@ selector, a cheap tile selector) decides what the expensive model sees. We find 
    compromised single selector is .33–.39.)
 
 ## Must-have experiments (in order)
-- [running] Mini-o3-7B crop substitution (+ blank crop, + first-turn commitment), full-res and 768² overview.
-- [todo] PixelReasoner-RL-7B adapter (Nous fn-call format, crop_image_normalized; prompt in pr_experience_maker.py:2753).
-- [todo] second benchmark for the agents (HR-Bench 4K).
+- [done] Mini-o3-7B crop substitution (768²): load-bearing (+.52 GT−random), abstains 70% under a wrong crop, 2% confabulation.
+- [done] PixelReasoner-RL-7B (768² and full res): weak reliance (+.03 to +.08), 11–18% confabulation.
+- [done/partial] HR-Bench-4K agent audit: DeepEyes' crops are worth +.065 there (not zero), but it still claims confirmation on 75% of blank crops. Mini-o3 HR running.
 - [todo] "decision before looking": % of rollouts whose first turn already names the final answer, vs base models.
-- [running] pathology EXT jobs (adaptive attack, hybrid presenter, independent scorers, weak scorer).
+- [done, 3 seeds] pathology EXT jobs (adaptive attack, hybrid presenter, independent scorers, weak scorer).
 - [todo] VLM advocates with a *cheap* selector (SigLIP per-option crop scoring) so both domains use the same cheap→expensive pipeline.
 - [todo] lit check: faithfulness of thinking-with-images / visual tool use (2025–26) — not done (searches were not approved tonight).
 
@@ -27,3 +27,8 @@ selector, a cheap tile selector) decides what the expensive model sees. We find 
 - Novelty of the "decorative zoom" finding (someone may have shown it in 2026). Need the lit check first thing.
 - One agent so far; need ≥3 agents and 2 benchmarks for a CVPR-level claim.
 - Protocol differences (letter scoring for base models vs generation for agents); report agent results with the agent's own protocol only.
+
+## Status 2026-10-25 early morning (honest read)
+- The strongest and most robust claim is **confabulated visual verification**: DeepEyes says the zoom confirms its answer on 75–90% of blank or irrelevant crops (V* and HR). The "zero reliance" claim holds on V* only (HR: +.065).
+- The agents span a spectrum (decorative → weak → load-bearing-and-abstaining). The paper can frame it as an evaluation protocol (crop substitution) plus this spectrum, with selection robustness (advocates/hybrid) as the fix on the load-bearing side.
+- Pathology hybrid: matches the single selector clean over 3 seeds; .71–.78 under adaptive attack vs ≤.02.
