@@ -88,3 +88,15 @@ The attacker scores every tile with Mini-o3 itself: its option log-probs when th
 - By comparison, 4 transfer tiles flip 46% for base Qwen2.5-VL, and white-box search flips 64–70%.
 - Mini-o3 is the hardest to hijack because it abstains (56–66%) instead of committing. It is safe but not useful under attack: accuracy drops to about .2 either way.
 - The white-box surrogate finds a flipping tile for only 42% of questions. With the right answer present in the overview, Mini-o3 mostly prefers it.
+
+## Judge-aware adaptive attacker on the VLM presenters (vlm_debate3.py ADAPT=1; the compromised slot picks, from its top-8 tiles, the one minimising the judge's p(true) on the full presentation)
+| | V* Qwen2.5 | V* Qwen3 | HR-4K Qwen2.5 |
+|---|---|---|---|
+| single selector compromised (attn; NOT judge-aware, so favours the baseline) | .366 | .335 | .390 |
+| advocates, true advocate compromised (adaptive) | .346 | .272 | .430 |
+| hybrid, true advocate compromised (adaptive) | .717 | .806 | .645 |
+| hybrid, neutral slot compromised (adaptive) | .670 | .728 | .610 |
+| **hybrid, per-question worst of both** | **.639 [.57,.71]** | **.707 [.64,.77]** | **.585 [.52,.66]** |
+| hybrid worst − compromised single (paired 95% CI) | +.27 [+.20,+.34] | +.37 [+.29,+.45] | +.20 [+.14,+.26] |
+
+An adaptive attacker costs the hybrid another .06–.07 compared with the fixed attacker tile, but it stays .20–.37 above the compromised single selector, and all CIs exclude 0. fig_robust_all now uses the adaptive numbers.

@@ -2,29 +2,29 @@
  "V* \u00b7 Qwen2.5-VL": {
   "single": 0.8115183246073299,
   "single_att": 0.36649214659685864,
-  "adv_att": 0.4083769633507853,
+  "adv_att": 0.34554973821989526,
   "hyb": 0.8219895287958116,
-  "hyb_att": 0.7015706806282722,
+  "hyb_att": 0.6387434554973822,
   "n": 191,
-  "adaptive": false
+  "adaptive": true
  },
  "V* \u00b7 Qwen3-VL": {
   "single": 0.9109947643979057,
   "single_att": 0.33507853403141363,
-  "adv_att": 0.4083769633507853,
+  "adv_att": 0.27225130890052357,
   "hyb": 0.8795811518324608,
-  "hyb_att": 0.7801047120418848,
+  "hyb_att": 0.7068062827225131,
   "n": 191,
-  "adaptive": false
+  "adaptive": true
  },
  "HR-4K \u00b7 Qwen2.5-VL": {
   "single": 0.69,
   "single_att": 0.39,
-  "adv_att": 0.46,
+  "adv_att": 0.43,
   "hyb": 0.72,
-  "hyb_att": 0.625,
+  "hyb_att": 0.585,
   "n": 200,
-  "adaptive": false
+  "adaptive": true
  },
  "CAMELYON17 (\u03ba)": {
   "single": 0.8726137151325698,
