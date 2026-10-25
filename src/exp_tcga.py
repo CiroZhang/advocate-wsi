@@ -129,7 +129,7 @@ def admil_wb(i):
         if best is None or Fn.softmax(torch.tensor(v), 0)[y[i]] < Fn.softmax(torch.tensor(best), 0)[y[i]]: best = v
     return best
 L['admil_wb_worst'] = np.stack([admil_wb(i) for i in te])
-EXT = os.environ.get('EXT'); SUF = '_ext' if EXT else ''
+EXT = os.environ.get('EXT'); SUF = ('_ext' + os.environ.get('SUFX', '')) if EXT else ''
 if EXT:  # extended robustness experiments (ext.py): adaptive attack, hybrid presenter, independent per-advocate scorers, weak scorer
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__))); import ext
     cx = ext.Ctx(XE=XE, extra=lambda i, idx: torch.zeros(len(idx), 0), E=0, C=C, y=y, tr=tr, te=te, train=train, predict=predict, rng=rng, DEV=DEV)

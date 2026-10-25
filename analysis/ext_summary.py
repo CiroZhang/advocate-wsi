@@ -1,6 +1,6 @@
 """3-seed summary of the EXT experiments (results/ext/*_ext.json): per seed, mean over 5 folds; report mean ± sd over seeds.
 C17 uses kappa, TCGA cohorts use balanced accuracy. 'hybK' = hybrid with K tiles (K = the full-slide-free budget, 12 or 16).
-usage: python analysis/ext_summary.py [results/ext]"""
+usage: python analysis/ext_summary.py [results/ext] [suffix, e.g. _atty]"""
 import sys, json, glob, re, collections, numpy as np
 
 ROWS = [('admil', 'single selector, clean'), ('admil_wb_worst', 'single selector, attacked'), ('admil_weak', 'single selector, weak scorer'),
@@ -11,9 +11,9 @@ ROWS = [('admil', 'single selector, clean'), ('admil_wb_worst', 'single selector
         ('x_weak', 'advocates, weak scorer'), ('x_weak_wb', 'advocates, weak scorer, attacked')]
 DS = [('c17', 'kappa', 'C17 κ'), ('tcga_rcc', 'balacc', 'RCC BA'), ('tcga_nsclc', 'balacc', 'NSCLC BA')]
 
-def main(d='results/ext'):
+def main(d='results/ext', sfx=''):
     V = collections.defaultdict(lambda: collections.defaultdict(list))  # (ds, key) -> seed -> fold values
-    for f in glob.glob(f'{d}/*_ext.json'):
+    for f in glob.glob(f'{d}/*_ext{sfx}.json'):
         b = f.split('/')[-1]; ds = next(x for x, _, _ in DS if b.startswith(x + '_')); met = dict((x, m) for x, m, _ in DS)[ds]
         seed = int(re.search(r'_s(\d+)_ext', b).group(1)); R = json.load(open(f))['res']
         for k, v in R.items():
@@ -21,7 +21,7 @@ def main(d='results/ext'):
             if m and m.group(1) != '4': k = 'hybK' + (m.group(2) or '')
             V[(ds, k)][seed].append(v[met])
     seeds = sorted({s for v in V.values() for s in v})
-    out = [f'# EXT experiments, seeds {seeds} (5 folds each; mean over folds, then mean ± sd over seeds)', '',
+    out = [f'# EXT experiments{sfx}, seeds {seeds} (5 folds each; mean over folds, then mean ± sd over seeds)', '',
            '| | ' + ' | '.join(n for _, _, n in DS) + ' |', '|---' * (len(DS) + 1) + '|']
     for k, name in ROWS:
         cells = []

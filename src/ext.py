@@ -5,7 +5,7 @@ A presentation is a list of slots (index tensors into the slide's tiles); slot s
   hybrid          : the C advocates plus one neutral slot showing the single selector's top tiles (by distilled attention);
                     any one slot, including the neutral one, may be compromised.
 Configs that need new cheap scorers (independent per-advocate scorers, weak scorer) are built by the calling script."""
-import numpy as np, torch, torch.nn.functional as Fn
+import os, numpy as np, torch, torch.nn.functional as Fn
 
 class Ctx:  # XE, extra(i, idx) -> (len(idx), E) extra columns, E, C, y, tr, te, train, predict, rng, DEV
     def __init__(s, **kw): s.__dict__.update(kw)
@@ -36,8 +36,10 @@ def adaptive(cx, m, i, S, s, lv, M=128):
         chosen.append(rest[int(lp.argmin())])
     S2 = list(S); S2[s] = torch.tensor(chosen); return S2
 
+ATTY = bool(os.environ.get('ATTY'))  # also let the attacker take the TRUE class's advocate (argue any wrong class from that slot); used in training and evaluation
 def combos(cx, i, NF):  # (slot, target class) pairs an attacker may take: a wrong-class advocate argues its class; the neutral slot argues any wrong class
     yt = int(cx.y[i]); out = [(c, c) for c in range(cx.C) if c != yt]
+    if ATTY and NF >= cx.C: out += [(yt, c) for c in range(cx.C) if c != yt]
     return out + [(cx.C, c) for c in range(cx.C) if c != yt] if NF > cx.C else out
 
 def train_judge(cx, SS):  # as run_teacher in the main scripts: warm start on random tiles, then 3 rounds of clean + one-attacked transcripts
