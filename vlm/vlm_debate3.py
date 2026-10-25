@@ -7,12 +7,15 @@ Threat model = the attacker controls ONE evidence-selection component and knows 
   hyb_cy    : hyb with the true option's advocate compromised as in nway_cy.
   hyb_cn    : hyb with the neutral slot compromised (shows the attacker's best tile); advocates honest.
   (single selector compromised = vlm_debate2 attn, for comparison.)
-env: MODEL, DATA, SRC (cached partial jsonl), TAG. Output: {OUT}/{TAG}_deb3.jsonl"""
+ADAPT=1: judge-aware attacker. For hyb_cy / hyb_cn (and nway_cy), the compromised slot tries the top-M=8 tiles by strongest-wrong margin
+  and keeps the one that minimises the judge's p(true) on the full presentation. Output *_deb3ad.jsonl.
+env: MODEL, DATA, SRC (cached partial jsonl), TAG, ADAPT. Output: {OUT}/{TAG}_deb3.jsonl"""
 import os, sys, json, hashlib, numpy as np
 src = open("/scratch/ciro/cvpr_lab/hr_sel.py").read().split("res = []; t0")[0]
 sys.argv = [sys.argv[0]]; exec(src)
 SRC = os.environ["SRC"]; cache = {str(json.loads(l)['qid']): json.loads(l) for l in open(SRC)}
-outp = f"{OUT}/{os.environ['TAG']}_deb3.jsonl"
+ADAPT = bool(os.environ.get("ADAPT")); M = 8
+outp = f"{OUT}/{os.environ['TAG']}_deb3{'ad' if ADAPT else ''}.jsonl"
 done = {json.loads(l)['qid'] for l in open(outp)} if os.path.exists(outp) else set()
 fo = open(outp, 'a')
 for q in load_items():
@@ -32,9 +35,16 @@ for q in load_items():
             ims.append(tim(tile_of[k])); labs.append(f"Evidence presented to support option ({L[k]}):")
         if neutral is not None: ims.append(tim(neutral)); labs.append("Zoomed-in view:")
         return (ims, text, labs)
-    items = {'nway_cy': present(adv | {y: att}), 'nway_drop': present(adv | {y: None}), 'hyb': present(adv, coop),
-             'hyb_cy': present(adv | {y: att}, coop), 'hyb_cn': present(adv, att)}
-    sc = [score([it], n)[0] for it in items.values()]; torch.cuda.empty_cache()
-    r = {'qid': qid, 'y': y, 'nopt': n, 'order': order, 'att_tile': att, 'coop_tile': coop, **{k: v.tolist() for k, v in zip(items, sc)}}
+    if ADAPT:
+        cand = [int(t) for t in np.argsort(-(np.max(np.delete(S, y, 1), 1) - S[:, y]))[:M]]
+        r = {'qid': qid, 'y': y, 'nopt': n, 'order': order, 'cand': cand}
+        for nm, mk in [('nway_cy', lambda t: present(adv | {y: t})), ('hyb_cy', lambda t: present(adv | {y: t}, coop)), ('hyb_cn', lambda t: present(adv, t))]:
+            sc = score_many([mk(t) for t in cand], n, bs=4); j = int(sc[:, y].argmin()); r[nm] = sc[j].tolist(); r[nm + '_tile'] = cand[j]
+        torch.cuda.empty_cache()
+    else:
+        items = {'nway_cy': present(adv | {y: att}), 'nway_drop': present(adv | {y: None}), 'hyb': present(adv, coop),
+                 'hyb_cy': present(adv | {y: att}, coop), 'hyb_cn': present(adv, att)}
+        sc = [score([it], n)[0] for it in items.values()]; torch.cuda.empty_cache()
+        r = {'qid': qid, 'y': y, 'nopt': n, 'order': order, 'att_tile': att, 'coop_tile': coop, **{k: v.tolist() for k, v in zip(items, sc)}}
     fo.write(json.dumps(r) + "\n"); fo.flush()
 print('DONE', flush=True)
