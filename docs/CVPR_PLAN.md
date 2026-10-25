@@ -32,3 +32,21 @@ selector, a cheap tile selector) decides what the expensive model sees. We find 
 - The strongest and most robust claim is **confabulated visual verification**: DeepEyes says the zoom confirms its answer on 75–90% of blank or irrelevant crops (V* and HR). The "zero reliance" claim holds on V* only (HR: +.065).
 - The agents span a spectrum (decorative → weak → load-bearing-and-abstaining). The paper can frame it as an evaluation protocol (crop substitution) plus this spectrum, with selection robustness (advocates/hybrid) as the fix on the load-bearing side.
 - Pathology hybrid: matches the single selector clean over 3 seeds; .71–.78 under adaptive attack vs ≤.02.
+
+## Revised story after the lit check and the presenter attacks (2026-10-25)
+**Title idea:** "Whoever picks the evidence decides: selection attacks on high-resolution vision and a redundant presenter."
+1. **Threat:** an attacker controls one evidence-selection component (crop tool, tile selector, cheap scorer) and shows real, unmodified regions.
+   - Base VLMs: .81 → .34–.39 on V* and HR-4K.
+   - WSI MIL: chance on 4 datasets.
+   - RL agents (prior work: Wang 2026, Liu 2025): agents that ignore their zoom are immune but get nothing from it (DeepEyes). Agents that use it (Mini-o3) are hijacked on 29% of correct answers, or abstain, so accuracy under attack is about .2.
+2. **Method:** hybrid presenter = per-hypothesis advocates + a neutral slot, with the judge trained or prompted to weigh them.
+   - Pure advocates fail when the true advocate is compromised (.41); the hybrid tolerates any single compromised component.
+   - VLM: .73–.86 worst-case vs .34–.39; clean equal to the single selector.
+   - WSI: .71–.78 adaptive worst-case vs ≤.02; clean equal over 3 seeds.
+3. **Evidence that the fragility is adversarial-only:** a weak scorer costs the single selector ≤.01.
+
+### Remaining gaps (in priority order)
+- An adaptive attacker against the VLM hybrid that controls one component and chooses the tile knowing the hybrid's judge. Currently the attacker tile is chosen without seeing the judge's multi-crop input.
+- WSI: compromise the neutral slot specifically (hybrid with a compromised neutral selector). Check what src/ext.py's adaptive attack already covers.
+- Hybrid wrapper around an agent (optional).
+- Figures: one teaser (threat → three domains → hybrid), a robustness bar chart across domains, and a clean-vs-worst-case scatter.
