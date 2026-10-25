@@ -46,7 +46,11 @@ selector, a cheap tile selector) decides what the expensive model sees. We find 
 3. **Evidence that the fragility is adversarial-only:** a weak scorer costs the single selector ≤.01.
 
 ### Remaining gaps (in priority order)
-- An adaptive attacker against the VLM hybrid that controls one component and chooses the tile knowing the hybrid's judge. Currently the attacker tile is chosen without seeing the judge's multi-crop input.
-- WSI: compromise the neutral slot specifically (hybrid with a compromised neutral selector). Check what src/ext.py's adaptive attack already covers.
+- [done] Judge-aware adaptive attacker on the VLM hybrid: worst case .64/.71/.59 vs .37/.34/.39 (paired CIs exclude 0).
+- [done] WSI: the attacker may take any slot, including the true advocate and the neutral one (ATTY, 3 seeds); hybrid .71/.71/.67, pure advocates .59/.43/.15.
 - Hybrid wrapper around an agent (optional).
 - Figures: one teaser (threat → three domains → hybrid), a robustness bar chart across domains, and a clean-vs-worst-case scatter.
+
+## Next (Narval down Oct 27–Nov 3)
+- Main figure: paper/figs/fig_robust_all.pdf. Agent context figure: fig_agents.pdf (cite Wang 2026 for the audit protocol).
+- Optional: a stronger single-selector attacker for the VLM (judge-aware) to be symmetric; a hybrid around Mini-o3; HR-8K.
