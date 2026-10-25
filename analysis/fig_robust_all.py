@@ -13,10 +13,11 @@ def vlm(tag):
     ld = lambda f: {r['qid']: r for r in map(json.loads, open(f))}
     D2 = ld(f'{B}/results/vlm/{tag}_deb2.jsonl'); D3 = ld(f'{B}/results/vlm/{tag}_deb3.jsonl')
     fa = f'{B}/results/vlm/{tag}_deb3ad.jsonl'; DA = ld(fa) if os.path.exists(fa) else D3
-    q = [k for k in D3 if k in D2 and k in DA]; ok = lambda D, i, k: np.argmax(D[i][k]) == D[i]['y']
+    fs = f'{B}/results/vlm/{tag}_singlead.jsonl'; DS = ld(fs) if os.path.exists(fs) else None  # judge-aware attack on the single selector
+    q = [k for k in D3 if k in D2 and k in DA and (DS is None or k in DS)]; ok = lambda D, i, k: np.argmax(D[i][k]) == D[i]['y']
     m = lambda f: float(np.mean([f(i) for i in q]))
-    return dict(single=m(lambda i: ok(D2, i, 'coopn')), single_att=m(lambda i: ok(D2, i, 'attn')), adv_att=m(lambda i: ok(DA, i, 'nway_cy')),
-                hyb=m(lambda i: ok(D3, i, 'hyb')), hyb_att=m(lambda i: ok(DA, i, 'hyb_cy') and ok(DA, i, 'hyb_cn')), n=len(q), adaptive=DA is not D3)
+    return dict(single=m(lambda i: ok(D2, i, 'coopn')), single_att=m(lambda i: ok(DS, i, 'attn_ad') if DS else ok(D2, i, 'attn')), adv_att=m(lambda i: ok(DA, i, 'nway_cy')),
+                hyb=m(lambda i: ok(D3, i, 'hyb')), hyb_att=m(lambda i: ok(DA, i, 'hyb_cy') and ok(DA, i, 'hyb_cn')), n=len(q), adaptive=DA is not D3, single_adaptive=DS is not None)
 
 def wsi(ds, met):
     V = collections.defaultdict(lambda: collections.defaultdict(list))
