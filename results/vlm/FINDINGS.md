@@ -74,7 +74,7 @@ Mini-o3 HR complete (200 q).
   - Clean accuracy is equal or better than the single selector (.822 vs .812, .720 vs .690), except Qwen3 (.880 vs .911).
 - This matches pathology, where the hybrid closes the clean gap and holds .71–.78 under adaptive attack. **The method of the paper should be the hybrid (redundant, independent evidence channels), not advocates alone.**
 
-## White-box crop attack on Mini-o3 (V*, 168/191 so far; agent_subst.py CONDS=wb0..3)
+## White-box crop attack on Mini-o3 (V*, 191/191; agent_subst.py CONDS=wb0..3)
 The attacker scores every tile with Mini-o3 itself: its option log-probs when the first zoom returns that tile and it is made to answer. Every zoom call then returns one of the top-4 tiles.
 
 | crop returned at every zoom | correct | committed wrong | abstains |
@@ -84,7 +84,7 @@ The attacker scores every tile with Mini-o3 itself: its option log-probs when th
 | transfer adversarial (Qwen-chosen, adv0) | .256 | .179 | .565 |
 | white-box adversarial (wb0) | .244 | .196 | .560 |
 
-- Among natively correct questions, 1 white-box tile turns 17% into a committed wrong answer, and any of the top 4 tiles does so for 29%. The transfer tile does so for 14%.
+- Among natively correct questions, 1 white-box tile turns 17% into a committed wrong answer, and any of the top 4 tiles does so for 30%. The transfer tile does so for 16% (final, n=162 natively correct).
 - By comparison, 4 transfer tiles flip 46% for base Qwen2.5-VL, and white-box search flips 64–70%.
 - Mini-o3 is the hardest to hijack because it abstains (56–66%) instead of committing. It is safe but not useful under attack: accuracy drops to about .2 either way.
 - The white-box surrogate finds a flipping tile for only 42% of questions. With the right answer present in the overview, Mini-o3 mostly prefers it.
