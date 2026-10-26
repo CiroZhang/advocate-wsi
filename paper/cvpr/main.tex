@@ -108,7 +108,7 @@ Witness-sufficiency is a property of the judge, not of the presenter, and we do 
 \setlength{\tabcolsep}{3pt}\small
 \begin{tabular}{@{}lccc@{}}\toprule
  & V$^*$ Q2.5 & V$^*$ Q3 & HR-4K Q2.5\\\midrule
-overview only & .665 & .691 & \pend{} \\
+overview only (no crops) & .665 & .691 & .600 \\
 single, honest & .812 & .911 & .690\\
 single, compromised (fixed) & .366 & .335 & .390\\
 single, compromised (adaptive) & \pend{} & \pend{} & \pend{}\\\midrule
@@ -154,6 +154,8 @@ hybrid-$K_c$, honest & .854\pmsd{.005} & .933\pmsd{.016} & .898\pmsd{.004}\\
 \textbf{Advocates fail at the true advocate.} Honest advocates are as accurate as the single selector on V$^*$ with Qwen2.5-VL and on HR-Bench (.806, .705), and lower with Qwen3-VL (.843 vs.\ .911). When the attacker silences the advocate of the true option, accuracy drops to .39--.48. When it makes that advocate show the attacker's tile, accuracy drops to .27--.43 with the adaptive attacker, no better than a compromised single selector. In pathology the same holds once the attacker may take the true class's slot: .59/.43/.15 (Tab.~\ref{tab:wsi}). Independent cheap scorers for each advocate, which an attacker would have to compromise separately, do not help against this attacker either (.68/.68/.51). Diversity of selectors is not what matters. What matters is that some honest slot is not committed to a wrong class.
 
 \textbf{The hybrid tolerates any single compromise.} Adding one neutral slot raises the per-input worst case to .64/.71/.59 on natural images (+.20 to +.37 over the compromised single selector; every paired CI excludes 0) and to .71/.71/.67 in pathology (vs.\ $-$.24/.02/.00). On natural images the neutral slot is the more attractive target in all three settings: the advocate of $y$ alone protects the judge more than the neutral slot does. The two slots fail on different inputs, though, so the per-input worst case is below either.
+
+\textbf{Relative to not zooming at all.} An attacker cannot hurt a judge that sees only the overview (.665/.691/.600). The compromised single selector is far below that floor (.37/.34/.39), so zooming through it is worse than not zooming. The hybrid's worst case is close to the floor (.639/.707/.585, i.e.\ $-$.03/+.02/$-$.02), while its honest accuracy keeps most of the gain from zooming (+.16/+.19/+.12). In this sense the hybrid makes zooming roughly safe to use. It does not make it strictly better than not zooming under attack. \note{this is the reviewer question we must answer head-on; a floor-respecting fallback (abstain to overview-only when slots disagree) is the obvious next step}
 
 \textbf{Clean accuracy.} The honest hybrid matches or beats the honest single selector in five of six settings (.822 vs.\ .812, .720 vs.\ .690; .879/.924/.905 vs.\ .873/.907/.909). The exception is Qwen3-VL on V$^*$ (.880 vs.\ .911).
 
