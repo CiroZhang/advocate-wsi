@@ -100,3 +100,21 @@ The attacker scores every tile with Mini-o3 itself: its option log-probs when th
 | hybrid worst − compromised single (paired 95% CI) | +.27 [+.20,+.34] | +.37 [+.29,+.45] | +.20 [+.14,+.26] |
 
 An adaptive attacker costs the hybrid another .06–.07 compared with the fixed attacker tile, but it stays .20–.37 above the compromised single selector, and all CIs exclude 0. fig_robust_all now uses the adaptive numbers.
+
+## Plain-redundancy baseline (reviewer weakness #1; analysis/redundancy_offline.py, exact from cached S, EXHAUSTIVE one-slot attacker)
+Isolate-then-aggregate: each slot's tile is judged separately with the overview, and the slots are combined by majority vote or by mean log-prob. The attacker replaces one slot by any tile.
+
+| clean / worst | V* Q2.5 | V* Q3 | HR Q2.5 |
+|---|---|---|---|
+| C+1 most-confident tiles, vote (no labels) | .743 / **.665** | .806 / .691 | .665 / **.620** |
+| C+1 most-confident tiles, mean | .749 / .665 | .817 / **.712** | .650 / .620 |
+| hybrid tiles, vote | .738 / .414 | .817 / .356 | .635 / .480 |
+| hybrid tiles, mean | .775 / .571 | .890 / .602 | .675 / .575 |
+| (joint hybrid, Tab. 1: clean / adaptive top-8 worst) | .822 / .639 | .880 / .707 | .720 / .585 |
+| overview only | .665 | .691 | .600 |
+
+**Honest read:**
+- Plain redundancy with isolated judging reaches the no-zoom floor in the worst case, even against an exhaustive attacker. That is as good as our hybrid's worst case or better.
+- It gives up most of the clean gain: +.08/+.12/+.05 over the overview, compared with +.16/+.19/+.12 for the joint hybrid.
+- Neither dominates. The joint hybrid buys about .07 clean accuracy at a cost of about .03 worst case, and its attacker was weaker (top-8, not exhaustive).
+- This undercuts the claim that "labels + neutral slot" is what provides robustness.
