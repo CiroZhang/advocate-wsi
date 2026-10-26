@@ -10,5 +10,7 @@ python -c "import json,sys; r=json.load(open(sys.argv[1]))['res']; assert {'full
 ADV_ROOT="$T" EXT=1 CHEAP=b0 KC=2 python src/exp_tcga.py 0 1 rcc >/dev/null && echo "exp_tcga EXT=1 OK"
 ADV_ROOT="$T" EXT=1 CHEAP=b0 python src/exp_c17.py 0 0 >/dev/null && echo "exp_c17 EXT=1 OK"
 ADV_ROOT="$T" EXT=1 ATTY=1 SUFX=_atty CHEAP=b0 KC=2 python src/exp_tcga.py 0 1 rcc >/dev/null && ls "$T"/studentB_debate/results/*_atty.json >/dev/null && echo "exp_tcga EXT=1 ATTY=1 OK"
+ADV_ROOT="$T" BONLY=1 CHEAP=b0 KC=2 python src/exp_tcga.py 0 2 rcc >/dev/null && ls "$T"/studentB_debate/results/tcga_rcc_b0_k2_f2_s0_budget.json >/dev/null && echo "exp_tcga BONLY=1 OK"
+ADV_ROOT="$T" BONLY=1 CHEAP=b0 python src/exp_c17.py 0 1 >/dev/null && ls "$T"/studentB_debate/results/c17_b0_k4_f1_s0_budget.json >/dev/null && echo "exp_c17 BONLY=1 OK"
 (cd analysis && python -c "import compute_table, stats" >/dev/null && echo "analysis imports OK")
 echo "SMOKE TEST PASSED"

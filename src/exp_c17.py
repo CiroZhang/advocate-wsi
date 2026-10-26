@@ -114,19 +114,27 @@ def run_teacher(keep_flags, tag):
         cands = [predict(tch, [pr(i, wb_replace(tch, i, SS[i], lv, keep_flags))])[0] for lv in range(C) if lv != y[i]]
         worst.append(min(cands, key=lambda v: Fn.softmax(torch.tensor(v), 0)[y[i]].item()))
     L[tag + '_wb_worst'] = np.stack(worst)
-run_teacher(True, 'teach'); run_teacher(False, 'noflag')
+BONLY = os.environ.get('BONLY')  # budget-matched single selector only (skips the teachers)
+if not BONLY: run_teacher(True, 'teach'); run_teacher(False, 'noflag')
 # ADMIL-style: top-K (K = C*Kc) by distilled attention -> full 4-class teacher; compromised selector: white-box toward a wrong level
 K = C * Kc
 L['admil'] = predict(fu4, [XE[i][G[i][:, 1].topk(min(K, len(XE[i]))).indices] for i in te])
 @torch.no_grad()
-def admil_wb(i):
+def admil_wb(i, KK=None):
+    KK = KK or K
     z, a = fu4.terms(XE[i].to(DEV)); lp = Fn.log_softmax(fu4.c(z), 1).cpu(); best = None
     for lv in range(C):
         if lv == y[i]: continue
-        v = predict(fu4, [XE[i][lp[:, lv].topk(min(K, len(lp))).indices]])[0]
+        v = predict(fu4, [XE[i][lp[:, lv].topk(min(KK, len(lp))).indices]])[0]
         if best is None or Fn.softmax(torch.tensor(v), 0)[y[i]] < Fn.softmax(torch.tensor(best), 0)[y[i]]: best = v
     return best
 L['admil_wb_worst'] = np.stack([admil_wb(i) for i in te])
+if BONLY:  # single selector at the hybrid presenters' budgets: K (= ours), K + Kc (hybrid-Kc), 2K (hybrid-K); clean and white-box attacked
+    R = {}
+    for KK in (K, K + Kc, 2 * K):
+        R[f'admil_b{KK}'] = mets(predict(fu4, [XE[i][G[i][:, 1].topk(min(KK, len(XE[i]))).indices] for i in te]))
+        R[f'admil_b{KK}_wb_worst'] = mets(np.stack([admil_wb(i, KK) for i in te])); print(KK, R[f'admil_b{KK}'], R[f'admil_b{KK}_wb_worst'], flush=True)
+    json.dump({'res': R, 'info': {'seed': seed, 'fold': fold, 'Kc': Kc, 'K': K}}, open(f'{OUT}/c17_{CH}_k{Kc}_f{fold}_s{seed}_budget.json', 'w'), indent=1); sys.exit(0)
 EXT = os.environ.get('EXT'); SUF = ('_ext' + os.environ.get('SUFX', '')) if EXT else ''
 if EXT:  # extended robustness experiments (ext.py): adaptive attack, hybrid presenter, independent per-advocate scorers, weak scorer
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__))); import ext
