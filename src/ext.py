@@ -28,7 +28,8 @@ def batched(m, X3):  # gated-ABMIL forward over a batch of equal-size bags [B, n
 def adaptive(cx, m, i, S, s, lv, M=128):
     NF = len(S); k = len(S[s]); yt = int(cx.y[i])
     cand = tile_scores(cx, m, i, s, NF, lv).topk(min(M, len(cx.XE[i]))).indices.tolist()
-    base = torch.cat([slot_rows(cx, i, idx, t, NF) for t, idx in enumerate(S) if t != s]).to(cx.DEV); chosen = []
+    oth = [slot_rows(cx, i, idx, t, NF) for t, idx in enumerate(S) if t != s]
+    base = (torch.cat(oth) if oth else torch.zeros(0, cx.XE[i].shape[1] + NF + cx.E)).to(cx.DEV); chosen = []
     for _ in range(min(k, len(cand))):
         rest = [c for c in cand if c not in chosen]
         A = torch.stack([slot_rows(cx, i, torch.tensor(chosen + [c]), s, NF) for c in rest]).to(cx.DEV)
@@ -37,8 +38,11 @@ def adaptive(cx, m, i, S, s, lv, M=128):
     S2 = list(S); S2[s] = torch.tensor(chosen); return S2
 
 ATTY = bool(os.environ.get('ATTY'))  # also let the attacker take the TRUE class's advocate (argue any wrong class from that slot); used in training and evaluation
+ANYSLOT = False  # redundancy baselines: slots are unlabelled, so the attacker may take any slot and argue any wrong class
 def combos(cx, i, NF):  # (slot, target class) pairs an attacker may take: a wrong-class advocate argues its class; the neutral slot argues any wrong class
-    yt = int(cx.y[i]); out = [(c, c) for c in range(cx.C) if c != yt]
+    yt = int(cx.y[i])
+    if ANYSLOT: return [(s, c) for s in range(NF) for c in range(cx.C) if c != yt]
+    out = [(c, c) for c in range(cx.C) if c != yt]
     if ATTY and NF >= cx.C: out += [(yt, c) for c in range(cx.C) if c != yt]
     return out + [(cx.C, c) for c in range(cx.C) if c != yt] if NF > cx.C else out
 
@@ -64,7 +68,38 @@ def evaluate(cx, m, SS, tag, L, adapt=True):
             worst.append(min(cands, key=lambda v: Fn.softmax(torch.tensor(v), 0)[int(cx.y[i])].item()))
         L[f'{tag}_{kind}'] = np.stack(worst)
 
+def train_iso(cx, SS):  # isolate-then-aggregate judge: one bag per slot (flag of size 1), trained on honest and white-box-attacked single slots
+    def rand1(i, k): return [torch.randperm(len(cx.XE[i]))[:k]]
+    m = cx.train([rows(cx, i, rand1(i, len(SS[i][0]))) for i in cx.tr], cx.y[cx.tr], cx.C, 10); sets, ys = [], []
+    for r in range(3):
+        for i in cx.tr:
+            yt = int(cx.y[i]); idx = SS[i][int(cx.rng.integers(len(SS[i])))]; lv = int(cx.rng.choice([c for c in range(cx.C) if c != yt]))
+            sets += [rows(cx, i, [idx]), rows(cx, i, wb(cx, m, i, [idx], 0, lv))]; ys += [yt, yt]
+        m = cx.train(sets, ys, cx.C, 5, model=m)
+    return m
+
+def evaluate_iso(cx, m, SS, tag, L):
+    """Each slot judged alone; aggregate = mean of per-slot log-probs. Attack: one slot replaced (per-tile or greedy set attack against
+    that slot alone, any wrong class); L[tag] clean, L[tag_ad] per-slide worst case."""
+    lp = lambda i, S: [torch.tensor(cx.predict(m, [rows(cx, i, [idx])])[0]).log_softmax(0) for idx in S]
+    clean, worst = [], []
+    for i in cx.te:
+        P = lp(i, SS[i]); clean.append(torch.stack(P).mean(0).numpy()); yt = int(cx.y[i]); best = None
+        for s in range(len(SS[i])):
+            for lv in range(cx.C):
+                if lv == yt: continue
+                for att in (wb, adaptive):
+                    Q = list(P); Q[s] = lp(i, [att(cx, m, i, [SS[i][s]], 0, lv)[0]])[0]; v = torch.stack(Q).mean(0).numpy()
+                    if best is None or Fn.softmax(torch.tensor(v), 0)[yt] < Fn.softmax(torch.tensor(best), 0)[yt]: best = v
+        worst.append(best)
+    L[tag] = np.stack(clean); L[f'{tag}_ad'] = np.stack(worst)
+
 def run(cx, configs, L, log=print):
-    """configs: list of (tag, SS dict over all slides, adapt flag)."""
-    for tag, SS, adapt in configs:
-        m = train_judge(cx, SS); evaluate(cx, m, SS, tag, L, adapt); log(tag)
+    """configs: list of (tag, SS dict over all slides, adapt flag[, mode]); mode 'any' = unlabelled slots (attacker takes any slot),
+    'iso' = isolate-then-aggregate (each slot judged alone, any slot attackable)."""
+    global ANYSLOT
+    for tag, SS, adapt, *mode in configs:
+        mode = mode[0] if mode else None; ANYSLOT = mode in ('any', 'iso')
+        if mode == 'iso': m = train_iso(cx, SS); evaluate_iso(cx, m, SS, tag, L)
+        else: m = train_judge(cx, SS); evaluate(cx, m, SS, tag, L, adapt)
+        ANYSLOT = False; log(tag)
