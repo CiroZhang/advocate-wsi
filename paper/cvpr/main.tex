@@ -4,7 +4,8 @@
 \documentclass[10pt,twocolumn,letterpaper]{article}
 \usepackage[review]{cvpr}
 \usepackage{graphicx,booktabs,amsmath,amssymb,amsthm,multirow,xcolor}
-\usepackage{caption}
+\usepackage{caption,tikz}
+\usetikzlibrary{arrows.meta}
 \definecolor{cvprblue}{rgb}{0.21,0.49,0.74}
 \usepackage[pagebackref,breaklinks,colorlinks,allcolors=cvprblue]{hyperref}
 \newcommand{\pend}[1]{{\color{red}[#1]}}
@@ -32,7 +33,7 @@ We study what happens when that component is not trustworthy, because it is bugg
 
 \textbf{Selection is an attack surface} (Sec.~\ref{sec:attack}). With the overview always visible, choosing the crops lowers Qwen2.5-VL from .81 to .37 on V$^*$ and from .69 to .39 on HR-Bench-4K, and Qwen3-VL from .91 to .34. In pathology, the same attack sends an efficient single-selector pipeline to $\kappa=-.24$ on CAMELYON17 and to .02/.00 balanced accuracy on TCGA-RCC/NSCLC, i.e.\ to the attacker's class on nearly every slide. Concurrent work shows that some RL zoom agents ignore their crops~\cite{wang2026illusion,liu2025faithful}. We confirm this and show the flip side: those agents are immune only because their zoom adds nothing, while the agent whose zoom carries information (Mini-o3) can be hijacked.
 
-\textbf{Redundant presentation} (Sec.~\ref{sec:method}). Debate~\cite{irving2018debate,khan2024debate} suggests giving every hypothesis its own advocate, so a compromised selector can no longer hide the evidence for the truth. We find that this is not enough. If the attacker takes the \emph{true} answer's advocate, the judge sees only evidence for wrong answers and accuracy falls to the compromised-single-selector level (.27--.43 on natural images; .15--.59 in pathology). Adding one label-free neutral slot fixes this. Under any single compromise, either the true advocate or the neutral slot stays honest (Prop.~\ref{prop:cover}). This \emph{hybrid presenter} needs no knowledge of which component is compromised and adds one slot of cost.
+\textbf{Redundant presentation} (Sec.~\ref{sec:method}, Fig.~\ref{fig:method}). Debate~\cite{irving2018debate,khan2024debate} suggests giving every hypothesis its own advocate, so a compromised selector can no longer hide the evidence for the truth. We find that this is not enough. If the attacker takes the \emph{true} answer's advocate, the judge sees only evidence for wrong answers and accuracy falls to the compromised-single-selector level (.27--.43 on natural images; .15--.59 in pathology). Adding one label-free neutral slot fixes this. Under any single compromise, either the true advocate or the neutral slot stays honest (Prop.~\ref{prop:cover}). This \emph{hybrid presenter} needs no knowledge of which component is compromised and adds one slot of cost.
 
 \textbf{Contributions.}
 \textbf{(1)} A threat model and attacks for evidence selection in high-resolution vision that use only real, unmodified regions, evaluated in two domains (natural-image VLMs, gigapixel pathology), and on RL zoom agents.
@@ -53,6 +54,11 @@ We study what happens when that component is not trustworthy, because it is bugg
 \textbf{Adversarial robustness.} Attacks on MIL perturb tile pixels or features~\cite{foote2021now,mil_adv2022}. Attacks on multimodal agents perturb images or inject instructions~\cite{wu2024agentattack,crossinject2025}. Our attacker does neither; it chooses which authentic regions to show.
 
 \textbf{Debate and prover--verifier games.} Debate~\cite{irving2018debate,khan2024debate,kenton2024scalable}, prover--verifier games~\cite{anil2021pvg,kirchner2024pvg} and Merlin--Arthur classifiers~\cite{waldchen2024merlin} let untrusted provers present evidence to a weaker verifier. Merlin--Arthur in particular pairs a cooperative and an adversarial feature selector. Our advocates follow this idea. Our finding that they fail when the true side's prover is compromised, and our neutral-slot fix, apply to that setting as well.
+
+\begin{figure*}[t]\centering
+\resizebox{\textwidth}{!}{\input{fig_presenters.tex}}
+\caption{\textbf{Presenters under one compromised component} (red). (a) A single selector decides alone. (b) One advocate per answer fails when the attacker takes the true answer's advocate: the judge then sees evidence only for wrong answers. (c) The hybrid adds one label-free neutral slot; whichever single slot is compromised, either the true answer's advocate or the neutral slot stays honest (green; Prop.~\ref{prop:cover}).}\label{fig:method}
+\end{figure*}
 
 %=====================================================================
 \section{Threat model}\label{sec:threat}

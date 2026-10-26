@@ -1,0 +1,43 @@
+% Method figure: three presenters, each with one compromised slot (red). \input from main.tex inside a figure* (needs tikz).
+\begin{tikzpicture}[font=\scriptsize, >={Stealth[length=4pt]},
+  slot/.style={draw, rounded corners=2pt, minimum width=13mm, minimum height=5mm, align=center, fill=white},
+  bad/.style={slot, draw=red!70!black, fill=red!8, text=red!50!black},
+  wit/.style={slot, draw=green!45!black, line width=.8pt},
+  judge/.style={draw, rounded corners=3pt, minimum width=11mm, minimum height=9mm, align=center, fill=gray!10},
+  img/.style={draw, minimum width=9mm, minimum height=9mm, fill=blue!6},
+  ttl/.style={font=\footnotesize\bfseries, anchor=west}]
+% ---------- (a) single selector ----------
+\begin{scope}
+  \node[ttl] at (-0.2, 1.55) {(a) Single selector};
+  \node[img] (xa) at (0, 0) {$x$};
+  \node[bad] (sa) at (1.7, 0) {selector};
+  \node[judge] (ja) at (3.4, 0) {judge};
+  \draw[->] (xa) -- (sa); \draw[->, red!70!black] (sa) -- (ja);
+  \node[align=center, text=red!50!black] at (1.9, -0.95) {compromised selector\\$\Rightarrow$ attacker decides};
+\end{scope}
+% ---------- (b) advocates ----------
+\begin{scope}[xshift=5.0cm]
+  \node[ttl] at (-0.2, 1.55) {(b) Advocates (one per answer)};
+  \node[img] (xb) at (0, 0) {$x$};
+  \node[bad] (b1) at (1.7, 0.75) {adv.\ $y$ (true)};
+  \node[slot] (b2) at (1.7, 0) {adv.\ $y'$};
+  \node[slot] (b3) at (1.7, -0.75) {adv.\ $y''$};
+  \node[judge] (jb) at (3.4, 0) {judge};
+  \foreach \s in {b1,b2,b3} \draw[->] (xb) -- (\s);
+  \draw[->, red!70!black] (b1) -- (jb); \draw[->] (b2) -- (jb); \draw[->] (b3) -- (jb);
+  \node[align=center, text=red!50!black] at (1.9, -1.45) {true advocate compromised\\$\Rightarrow$ only wrong answers argued};
+\end{scope}
+% ---------- (c) hybrid ----------
+\begin{scope}[xshift=10.0cm]
+  \node[ttl] at (-0.2, 1.55) {(c) Hybrid (ours)};
+  \node[img] (xc) at (0, 0) {$x$};
+  \node[bad] (c1) at (1.7, 0.95) {adv.\ $y$ (true)};
+  \node[slot] (c2) at (1.7, 0.32) {adv.\ $y'$};
+  \node[slot] (c3) at (1.7, -0.32) {adv.\ $y''$};
+  \node[wit] (c4) at (1.7, -0.95) {neutral};
+  \node[judge] (jc) at (3.4, 0) {judge};
+  \foreach \s in {c1,c2,c3,c4} \draw[->] (xc) -- (\s);
+  \draw[->, red!70!black] (c1) -- (jc); \draw[->] (c2) -- (jc); \draw[->] (c3) -- (jc); \draw[->, green!45!black, line width=.8pt] (c4) -- (jc);
+  \node[align=center, text=green!30!black] at (1.9, -1.6) {any one compromise leaves an\\honest witness (adv.\ $y$ or neutral)};
+\end{scope}
+\end{tikzpicture}
