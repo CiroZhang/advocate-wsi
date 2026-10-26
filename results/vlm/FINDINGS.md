@@ -118,3 +118,20 @@ Isolate-then-aggregate: each slot's tile is judged separately with the overview,
 - It gives up most of the clean gain: +.08/+.12/+.05 over the overview, compared with +.16/+.19/+.12 for the joint hybrid.
 - Neither dominates. The joint hybrid buys about .07 clean accuracy at a cost of about .03 worst case, and its attacker was weaker (top-8, not exhaustive).
 - This undercuts the claim that "labels + neutral slot" is what provides robustness.
+
+### Isolation curve (same script logic; m most-confident crops, each judged alone with the overview; exhaustive one-slot attacker), clean / worst
+| m | V* Q2.5 | V* Q3 | HR Q2.5 |
+|---|---|---|---|
+| 1 (= single selector, 1 crop) | .812 / .361 | .890 / .298 | .690 / .375 |
+| **2, mean** | **.796 / .702** | **.885 / .801** | **.665 / .625** |
+| 3, mean | .791 / .681 | .838 / .717 | .680 / .620 |
+| 5, mean | .749 / .670 | .806 / .723 | .650 / .620 |
+| 8, mean | .743 / .654 | .791 / .681 | .645 / .620 |
+| joint hybrid (Tab. 1, top-8 attacker) | .822 / .639 | .880 / .707 | .720 / .585 |
+
+**This is the most important natural-image result so far.**
+- Two crops, each judged in isolation and then averaged, cost .005–.025 clean accuracy compared with one crop.
+- The worst case rises by +.25 to +.50, against an exhaustive attacker. It is above the overview-only floor on V* (.702 vs .665; .801 vs .691) and on HR (.625 vs .600).
+- It beats the joint hybrid's worst case everywhere, with similar clean accuracy (it is lower on HR-4K: .665 vs .720).
+- The vulnerability is joint presentation: one bad crop in a shared context dominates. Debate-style labelled advocates do not fix that; isolation does.
+- Related: RobustRAG (isolate-then-aggregate for retrieval) — cite. Pathology analogue = x_rediso (jobs `red`).
