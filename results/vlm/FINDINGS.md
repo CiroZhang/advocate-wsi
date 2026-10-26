@@ -135,3 +135,7 @@ Isolate-then-aggregate: each slot's tile is judged separately with the overview,
 - It beats the joint hybrid's worst case everywhere, with similar clean accuracy (it is lower on HR-4K: .665 vs .720).
 - The vulnerability is joint presentation: one bad crop in a shared context dominates. Debate-style labelled advocates do not fix that; isolation does.
 - Related: RobustRAG (isolate-then-aggregate for retrieval) — cite. Pathology analogue = x_rediso (jobs `red`).
+Paired bootstrap of the worst case for 2 isolated crops. Note the attackers differ: isolated = exhaustive, hybrid = top-8, so this comparison favours the hybrid.
+- iso2 − compromised single: +.335 [+.27,+.40] (V* Q2.5), +.466 [+.40,+.53] (V* Q3), +.235 [+.18,+.30] (HR).
+- iso2 − hybrid worst: +.063 [.00,+.13], +.094 [+.04,+.16], +.040 [−.01,+.09].
+- Naming: do NOT call this "certified" (avoid confusion/overlap with the Certified Zoom paper). Use "exact worst case over the region grid".
