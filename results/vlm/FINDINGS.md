@@ -139,3 +139,18 @@ Paired bootstrap of the worst case for 2 isolated crops. Note the attackers diff
 - iso2 − compromised single: +.335 [+.27,+.40] (V* Q2.5), +.466 [+.40,+.53] (V* Q3), +.235 [+.18,+.30] (HR).
 - iso2 − hybrid worst: +.063 [.00,+.13], +.094 [+.04,+.16], +.040 [−.01,+.09].
 - Naming: do NOT call this "certified" (avoid confusion/overlap with the Certified Zoom paper). Use "exact worst case over the region grid".
+
+### Isolation ablation (analysis/isolation_ablation.py), clean / exact worst
+| | V* Q2.5 | V* Q3 | HR |
+|---|---|---|---|
+| 1 crop alone (no overview) | .738 / .005 | .759 / .000 | .595 / .040 |
+| 1 crop + overview (single selector) | .812 / .361 | .890 / .298 | .690 / .375 |
+| 2 isolated crops, no overview | .717 / .586 | .759 / .634 | .595 / .500 |
+| 2 isolated crops + overview as an extra voter | .707 / .565 | .775 / .613 | .615 / .505 |
+| **2 isolated crops, overview inside each call** | **.796 / .702** | **.885 / .801** | **.665 / .625** |
+
+Two things matter:
+- Isolation itself: .005 → .586 worst case without any overview.
+- Anchoring each isolated call on the overview: another +.10 to +.17 worst case and +.08 to +.13 clean. A separate overview voter does not give this.
+
+The overview inside each call lets the judge discount a crop that contradicts the global view. In a joint prompt, a single crop overrides it.
