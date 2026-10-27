@@ -1,0 +1,105 @@
+{
+ "res": {
+  "full_conch": {
+   "acc": 0.86,
+   "balacc": 0.6888917004048583,
+   "kappa": 0.9339803261371888,
+   "tumour_balacc": 0.9125
+  },
+  "teach": {
+   "acc": 0.83,
+   "balacc": 0.582995951417004,
+   "kappa": 0.9173501176171404,
+   "tumour_balacc": 0.8625
+  },
+  "teach_wb_worst": {
+   "acc": 0.62,
+   "balacc": 0.42624831309041833,
+   "kappa": 0.8488745980707395,
+   "tumour_balacc": 0.7291666666666666
+  },
+  "noflag": {
+   "acc": 0.83,
+   "balacc": 0.5890688259109312,
+   "kappa": 0.9156446693919927,
+   "tumour_balacc": 0.8625
+  },
+  "noflag_wb_worst": {
+   "acc": 0.73,
+   "balacc": 0.4511808367071525,
+   "kappa": 0.8714568226763348,
+   "tumour_balacc": 0.8458333333333333
+  },
+  "admil": {
+   "acc": 0.83,
+   "balacc": 0.5890688259109312,
+   "kappa": 0.9251789199739753,
+   "tumour_balacc": 0.875
+  },
+  "admil_wb_worst": {
+   "acc": 0.48,
+   "balacc": 0.2,
+   "kappa": -0.09875203472599048,
+   "tumour_balacc": 0.4
+  },
+  "admil_weak": {
+   "acc": 0.82,
+   "balacc": 0.569838056680162,
+   "kappa": 0.9132947976878613,
+   "tumour_balacc": 0.8625
+  },
+  "x_red": {
+   "acc": 0.83,
+   "balacc": 0.5980600539811066,
+   "kappa": 0.9267795746848339,
+   "tumour_balacc": 0.8666666666666667
+  },
+  "x_red_wb": {
+   "acc": 0.78,
+   "balacc": 0.5079790823211876,
+   "kappa": 0.8895601896966153,
+   "tumour_balacc": 0.8416666666666666
+  },
+  "x_red_ad": {
+   "acc": 0.77,
+   "balacc": 0.49482118758434546,
+   "kappa": 0.8756137479541735,
+   "tumour_balacc": 0.8291666666666666
+  },
+  "x_rediso": {
+   "acc": 0.79,
+   "balacc": 0.5,
+   "kappa": 0.8882750915523555,
+   "tumour_balacc": 0.8375
+  },
+  "x_rediso_ad": {
+   "acc": 0.79,
+   "balacc": 0.5,
+   "kappa": 0.8685446009389671,
+   "tumour_balacc": 0.8125
+  },
+  "x_hybiso": {
+   "acc": 0.81,
+   "balacc": 0.5506072874493927,
+   "kappa": 0.9109924343569203,
+   "tumour_balacc": 0.8625
+  },
+  "x_hybiso_ad": {
+   "acc": 0.76,
+   "balacc": 0.4665991902834008,
+   "kappa": 0.8854305900324614,
+   "tumour_balacc": 0.85
+  }
+ },
+ "info": {
+  "seed": 2,
+  "fold": 3,
+  "cheap": "b0",
+  "Kc": 4,
+  "shift": null,
+  "ext": true,
+  "n_train": 400,
+  "n_test": 100,
+  "mean_tiles_test": 2043.54
+ }
+}

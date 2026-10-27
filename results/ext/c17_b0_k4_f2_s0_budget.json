@@ -1,0 +1,46 @@
+{
+ "res": {
+  "admil_b16": {
+   "acc": 0.89,
+   "balacc": 0.5125,
+   "kappa": 0.9197496188106893,
+   "tumour_balacc": 0.9
+  },
+  "admil_b16_wb_worst": {
+   "acc": 0.69,
+   "balacc": 0.23,
+   "kappa": -0.05213382196477112,
+   "tumour_balacc": 0.46
+  },
+  "admil_b20": {
+   "acc": 0.9,
+   "balacc": 0.54375,
+   "kappa": 0.9361786996410052,
+   "tumour_balacc": 0.9199999999999999
+  },
+  "admil_b20_wb_worst": {
+   "acc": 0.69,
+   "balacc": 0.23,
+   "kappa": -0.05213382196477112,
+   "tumour_balacc": 0.46
+  },
+  "admil_b32": {
+   "acc": 0.89,
+   "balacc": 0.5270833333333333,
+   "kappa": 0.931162941367023,
+   "tumour_balacc": 0.9199999999999999
+  },
+  "admil_b32_wb_worst": {
+   "acc": 0.69,
+   "balacc": 0.23,
+   "kappa": -0.05213382196477112,
+   "tumour_balacc": 0.46
+  }
+ },
+ "info": {
+  "seed": 0,
+  "fold": 2,
+  "Kc": 4,
+  "K": 16
+ }
+}
