@@ -21,8 +21,8 @@ def stat(D, k, met):
     per = [np.mean([v[met] for v in D[k][s].values()]) for s in sorted(D[k])]; return np.mean(per), np.std(per)
 ROWS = [('single selector', 'admil', 'admil_wb_worst'), ('\\quad budget $K{+}K_c$', 'bud_mid', 'bud_mid_wb_worst'), ('\\quad budget $2K$', 'bud_hi', 'bud_hi_wb_worst'),
         ('\\quad weak honest scorer (10\\% data)', 'admil_weak', None), ('advocates', 'x_base', 'x_base_ad'), ('\\quad independent scorers', 'x_indep', 'x_indep_wb'),
-        ('redundancy, joint', 'x_red', 'x_red_min'), ('redundancy, isolated', 'x_rediso', 'x_rediso_ad'), ('advocates + neutral, isolated', 'x_hybiso', 'x_hybiso_ad'),
-        ('advocates + neutral ($K_c$)', 'hybKc', 'hybKc_ad'), ('advocates + neutral ($K$)', 'hybK', 'hybK_ad')]
+        ('advocates + selector slot ($K_c$)', 'hybKc', 'hybKc_ad'), ('advocates + selector slot ($K$)', 'hybK', 'hybK_ad'),
+        ('redundancy, isolated', 'x_rediso', 'x_rediso_ad'), ('\\textbf{redundancy, joint}', 'x_red', 'x_red_min')]
 T = {}
 for ds, met in DS:
     D = {}
@@ -36,6 +36,6 @@ for ds, met in DS:
     D['x_red_min'] = {s: {f: {met: min(D['x_red_wb'][s][f][met], D['x_red_ad'][s][f][met])} for f in D['x_red_ad'][s]} for s in D['x_red_ad']}
     T[ds] = {r[0]: (stat(D, r[1], met), stat(D, r[2], met) if r[2] else None) for r in ROWS}
 f = lambda x: '--' if x is None else ('%.3f' % x[0]).replace('0.', '.').replace('-.', '$-$.') + '\\pmsd{%s}' % ('%.3f' % x[1]).replace('0.', '.')
-L = [' & '.join([name] + [f(T[ds][name][j]) for ds, _ in DS for j in (0, 1)]) + '\\\\' for name, *_ in ROWS]
+L = [('\\midrule\n' if name.startswith('advocates') and name.endswith('advocates') or name.startswith('redundancy, iso') else '') + ' & '.join([name] + [f(T[ds][name][j]) for ds, _ in DS for j in (0, 1)]) + '\\\\' for name, *_ in ROWS]
 open(f'{B}/paper/miccai/tab_main.tex', 'w').write('\n'.join(L) + '\n\\bottomrule\n')
 for name, *_ in ROWS: print(f'{name:45s}', '  '.join('%.3f/%s' % (T[ds][name][0][0], '%.3f' % T[ds][name][1][0] if T[ds][name][1] else ' -- ') for ds, _ in DS))
