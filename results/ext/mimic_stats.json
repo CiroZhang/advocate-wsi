@@ -1,0 +1,40 @@
+{
+ "rcc": {
+  "n_slides": 882,
+  "K": 12,
+  "frac_slides_ge_K_other": 0.9671201814058957,
+  "frac_slides_ge_1_other": 0.9931972789115646,
+  "median_other_tiles": 967.0,
+  "median_other_frac": 0.23650351440277062,
+  "per_class_ge_K": {
+   "TCGA-KIRC": {
+    "TCGA-KIRP": 0.9776422764227642,
+    "TCGA-KICH": 0.8211382113821138
+   },
+   "TCGA-KIRP": {
+    "TCGA-KIRC": 0.9222614840989399,
+    "TCGA-KICH": 0.6713780918727915
+   },
+   "TCGA-KICH": {
+    "TCGA-KIRC": 0.9719626168224299,
+    "TCGA-KIRP": 0.9813084112149533
+   }
+  }
+ },
+ "nsclc": {
+  "n_slides": 1040,
+  "K": 8,
+  "frac_slides_ge_K_other": 0.9923076923076923,
+  "frac_slides_ge_1_other": 0.9990384615384615,
+  "median_other_tiles": 966.5,
+  "median_other_frac": 0.29201172839339107,
+  "per_class_ge_K": {
+   "TCGA-LUAD": {
+    "TCGA-LUSC": 0.9867674858223062
+   },
+   "TCGA-LUSC": {
+    "TCGA-LUAD": 0.9980430528375733
+   }
+  }
+ }
+}
