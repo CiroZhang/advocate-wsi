@@ -17,12 +17,14 @@ def rows(cx, i, S): return torch.cat([slot_rows(cx, i, idx, s, len(S)) for s, id
 @torch.no_grad()
 def tile_scores(cx, m, i, s, NF, lv):  # single-tile log p(lv) when a tile is shown under slot s's flag
     n = len(cx.XE[i]); X = torch.cat([cx.XE[i], onehot(n, s, NF), torch.zeros(n, cx.E)], 1).to(cx.DEV)
+    if not hasattr(m, 'terms'): return torch.cat([Fn.log_softmax(m.batch(X[j:j + 4096, None]), 1)[:, lv] for j in range(0, n, 4096)]).cpu()  # archs.MIL
     z, _ = m.terms(X); return Fn.log_softmax(m.c(z), 1)[:, lv].cpu()
 def wb(cx, m, i, S, s, lv):  # per-tile white-box attacker (as in the main experiments)
     S2 = list(S); S2[s] = tile_scores(cx, m, i, s, len(S), lv).topk(min(len(S[s]), len(cx.XE[i]))).indices; return S2
 
 @torch.no_grad()
 def batched(m, X3):  # gated-ABMIL forward over a batch of equal-size bags [B, n, d]
+    if hasattr(m, 'batch'): return torch.cat([m.batch(X3[j:j + 64]) for j in range(0, len(X3), 64)])  # archs.MIL
     z = m.f(X3); a = m.w(torch.tanh(m.a(z)) * torch.sigmoid(m.b(z))).squeeze(-1); return m.c((a.softmax(1)[..., None] * z).sum(1))
 @torch.no_grad()
 def adaptive(cx, m, i, S, s, lv, M=128):
@@ -103,3 +105,30 @@ def run(cx, configs, L, log=print):
         if mode == 'iso': m = train_iso(cx, SS); evaluate_iso(cx, m, SS, tag, L)
         else: m = train_judge(cx, SS); evaluate(cx, m, SS, tag, L, adapt)
         ANYSLOT = False; log(tag)
+
+def arch_run(cx, arch, train, top, SS, Kc, K, mets, out, t0, info):
+    """Generality (ARCH=...): the same selector (top), advocates (SS) and attacks with another MIL judge from archs.py.
+    full: judge on every tile; single: judge on the selector's top-K; single_ad: worst of per-tile and greedy set attack (top-128
+    candidates) replacing the selector, over wrong classes; x_red / x_hyb{K}: plain redundancy (any slot) and hybrid, as in run()."""
+    import json, time; from archs import MIL
+    C, XE, y, te, DEV = cx.C, cx.XE, cx.y, cx.te, cx.DEV
+    new = lambda d: MIL(d, C, arch).to(DEV); cx.train = lambda sets, ys, o, ep, model=None: train(sets, ys, o, ep, model=model or new(sets[0].shape[1]))
+    J = cx.train([XE[i] for i in cx.tr], y[cx.tr], C, 20); R = {'full': mets(cx.predict(J, [XE[i] for i in te])), 'single': mets(cx.predict(J, [XE[i][top(i, K)] for i in te]))}
+    worst = []
+    with torch.no_grad():
+        for i in te:
+            n = len(XE[i]); X = XE[i].to(DEV); P1 = torch.cat([J.batch(X[j:j + 4096, None]).log_softmax(1) for j in range(0, n, 4096)]).cpu(); cands = []
+            for lv in range(C):
+                if lv == y[i]: continue
+                cands.append(cx.predict(J, [XE[i][P1[:, lv].topk(min(K, n)).indices]])[0]); pool = P1[:, lv].topk(min(128, n)).indices.tolist(); ch = []
+                for _ in range(min(K, n)):
+                    rest = [c for c in pool if c not in ch]; lp = batched(J, torch.stack([X[ch + [c]] for c in rest])).log_softmax(1)[:, int(y[i])]
+                    ch.append(rest[int(lp.argmin())])
+                cands.append(cx.predict(J, [XE[i][ch]])[0])
+            worst.append(min(cands, key=lambda v: Fn.softmax(torch.tensor(v), 0)[int(y[i])].item()))
+    R['single_ad'] = mets(np.stack(worst)); print(arch, R, f'{time.time() - t0:.0f}s', flush=True)
+    N = range(len(XE)); LA = {}
+    def red(i, k): t = top(i, (C + 1) * k); return [t[j::C + 1] if j < len(t) else t[:1] for j in range(C + 1)]
+    run(cx, [('x_red', {i: red(i, Kc) for i in N}, True, 'any'), (f'x_hyb{K}', {i: SS[i] + [top(i, K)] for i in N}, True)], LA,
+        log=lambda t: print('arch', t, f'{time.time() - t0:.0f}s', flush=True))
+    R.update({k: mets(v) for k, v in LA.items()}); json.dump({'res': R, 'info': info}, open(out, 'w'), indent=1)

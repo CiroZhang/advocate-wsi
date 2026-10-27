@@ -115,7 +115,8 @@ def run_teacher(keep_flags, tag):
         worst.append(min(cands, key=lambda v: Fn.softmax(torch.tensor(v), 0)[y[i]].item()))
     L[tag + '_wb_worst'] = np.stack(worst)
 BONLY = os.environ.get('BONLY')  # budget-matched single selector only (skips the teachers)
-if not BONLY: run_teacher(True, 'teach'); run_teacher(False, 'noflag')
+ARCH = os.environ.get('ARCH')  # generality: same selector and attacks, other MIL judge (archs.py); skips everything else
+if not BONLY and not ARCH: run_teacher(True, 'teach'); run_teacher(False, 'noflag')
 # ADMIL-style: top-K (K = C*Kc) by distilled attention -> full 4-class teacher; compromised selector: white-box toward a wrong level
 K = C * Kc
 L['admil'] = predict(fu4, [XE[i][G[i][:, 1].topk(min(K, len(XE[i]))).indices] for i in te])
@@ -129,6 +130,11 @@ def admil_wb(i, KK=None):
         if best is None or Fn.softmax(torch.tensor(v), 0)[y[i]] < Fn.softmax(torch.tensor(best), 0)[y[i]]: best = v
     return best
 L['admil_wb_worst'] = np.stack([admil_wb(i) for i in te])
+if ARCH:
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__))); import ext
+    cx = ext.Ctx(XE=XE, extra=lambda i, idx: (P[i][idx] - P[i][idx[0]]) / 5.0, E=2, C=C, y=y, tr=tr, te=te, rng=rng, DEV=DEV, predict=predict)
+    ext.arch_run(cx, ARCH, train, lambda i, k: G[i][:, 1].topk(min(k, len(XE[i]))).indices, SS, Kc, K, mets,
+                 f'{OUT}/c17_{CH}_k{Kc}_f{fold}_s{seed}_arch{ARCH}.json', t0, info={'seed': seed, 'fold': fold, 'Kc': Kc, 'K': K, 'arch': ARCH}); sys.exit(0)
 if BONLY:  # single selector at the hybrid presenters' budgets: K (= ours), K + Kc (hybrid-Kc), 2K (hybrid-K); clean and white-box attacked
     R = {}
     for KK in (K, K + Kc, 2 * K):

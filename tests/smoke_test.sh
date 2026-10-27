@@ -14,5 +14,7 @@ ADV_ROOT="$T" BONLY=1 CHEAP=b0 KC=2 python src/exp_tcga.py 0 2 rcc >/dev/null &&
 ADV_ROOT="$T" BONLY=1 CHEAP=b0 python src/exp_c17.py 0 1 >/dev/null && ls "$T"/studentB_debate/results/c17_b0_k4_f1_s0_budget.json >/dev/null && echo "exp_c17 BONLY=1 OK"
 ADV_ROOT="$T" EXT=1 RED=1 SUFX=_red CHEAP=b0 KC=2 python src/exp_tcga.py 0 3 rcc >/dev/null && python -c "import json,sys; r=json.load(open(sys.argv[1]))['res']; assert {'x_red','x_red_ad','x_rediso','x_rediso_ad','x_hybiso_ad'} <= set(r); print('RED OK', {k: round(v['balacc'],2) for k,v in r.items() if k.startswith('x_')})" "$T"/studentB_debate/results/tcga_rcc_b0_k2_f3_s0_ext_red.json
 ADV_ROOT="$T" EXT=1 RED=1 SUFX=_red CHEAP=b0 python src/exp_c17.py 0 2 >/dev/null && echo "exp_c17 RED=1 OK"
+for A in mean max trans dsmil; do ADV_ROOT="$T" ARCH=$A CHEAP=b0 KC=2 python src/exp_tcga.py 0 4 rcc >/dev/null && python -c "import json,sys; r=json.load(open(sys.argv[1]))['res']; assert {'full','single','single_ad','x_red','x_red_ad','x_hyb6_ad'} <= set(r), set(r); print('ARCH', sys.argv[2], {k: round(v['balacc'],2) for k,v in r.items()})" "$T"/studentB_debate/results/tcga_rcc_b0_k2_f4_s0_arch$A.json $A; done
+ADV_ROOT="$T" ARCH=dsmil CHEAP=b0 python src/exp_c17.py 0 3 >/dev/null && ls "$T"/studentB_debate/results/c17_b0_k4_f3_s0_archdsmil.json >/dev/null && echo "exp_c17 ARCH OK"
 (cd analysis && python -c "import compute_table, stats" >/dev/null && echo "analysis imports OK")
 echo "SMOKE TEST PASSED"
