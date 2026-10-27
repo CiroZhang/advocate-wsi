@@ -1,0 +1,51 @@
+% Supplementary material for the MICCAI 2027 draft (main.tex). Paired differences: computed from results/ext/*.json.
+\documentclass[runningheads]{llncs}
+\usepackage{graphicx,booktabs,amsmath,amssymb}
+\begin{document}
+\title{Supplementary Material: Whoever Picks the Tiles Decides}
+\author{Anonymized Authors}\institute{Anonymized Affiliations}
+\maketitle
+\setcounter{section}{0}\renewcommand{\thesection}{S\arabic{section}}
+
+\section{Cheap scorer and single selector}
+Low-magnification tiles are encoded with an ImageNet EfficientNet-B0. A 3-layer MLP (256 hidden units, dropout 0.1) is distilled from a full-slide CONCH gated-ABMIL teacher trained on the same training split: one output head regresses the teacher's per-tile class logits (TCGA) or per-tile tumour logit (CAMELYON17), scaled by their standard deviation over the training tiles (MSE), and one head matches the teacher's attention distribution over the slide (KL divergence). Training: 20 epochs, AdamW, learning rate $5\cdot10^{-4}$, weight decay $10^{-4}$, one slide per step. The single selector shows the top-$K$ tiles by distilled attention to the frozen full-slide teacher (ADMIL-style).
+
+\section{Advocate rules}
+\textbf{TCGA.} The advocate of class $c$ shows the $K_c$ tiles with the largest margin $e_c-\max_{c'\neq c}e_{c'}$ of the cheap scorer's per-tile class logits $e$.
+\textbf{CAMELYON17.} With per-tile tumour evidence $e$ and tile positions $p$ (mm): \emph{negative}: the $K_c$ least tumour-like tiles; \emph{ITC}: the most tumour-like tile and its $K_c{-}1$ nearest tiles (an isolated focus); \emph{micro}: the most tumour-like tile and the $K_c{-}1$ most tumour-like tiles within 2\,mm of it (a compact cluster); \emph{macro}: farthest-point sampling of $K_c$ tiles among the top 2\% tumour-like tiles (spread of tumour). Each CAMELYON17 tile also carries its position relative to the first tile of its slot (mm/5).
+
+\section{Judges and training}
+All judges are gated-attention ABMIL models (hidden size 128, dropout 0.1) over 512-d CONCH features concatenated with a one-hot slot flag. They are trained with class-weighted cross-entropy, AdamW (learning rate $2\cdot10^{-4}$, weight decay $10^{-4}$), one slide per step. Full-slide models: 20 epochs. Multi-slot judges: a warm start of 10 epochs on random tiles in every slot, then three rounds; each round adds, for every training slide, its honest presentation and one presentation with a random (slot, wrong class) pair replaced by the per-tile attacker against the current judge, and trains for 5 more epochs on all presentations collected so far. Isolated judges see one slot at a time (a single flag) and are trained in the same way on honest and attacked single slots.
+
+\section{Attacks}
+\emph{Per-tile:} for target class $c$ and compromised slot $s$, the $B_s$ tiles with the highest $\log p_J(c)$ when each tile is shown alone under slot $s$'s flag. \emph{Adaptive:} starting from an empty set, $B_s$ greedy steps over the top-128 per-tile candidates, each adding the tile that minimises $p_J(y)$ of the full presentation (honest slots included). For every test slide, the reported worst case is the prediction with the lowest $p_J(y)$ over all slots the attacker may take, all wrong classes and both attacks. For isolated aggregation, the attacked slot is optimised against that slot's own judgement, which is exact for the mean-of-log-probabilities aggregate up to the greedy search.
+
+\section{Paired comparisons}
+\begin{table}[h]\centering
+\caption{Difference to joint redundancy (row $-$ joint redundancy), mean over the 15 fold--seed runs with 95\% paired bootstrap CI.}
+\setlength{\tabcolsep}{4pt}\scriptsize
+\begin{tabular}{@{}lcc@{}}\toprule
+presenter & $\Delta$ clean & $\Delta$ worst case\\
+\midrule
+\multicolumn{3}{@{}l}{\emph{CAMELYON17 ($\kappa$)}}\\
+\quad single selector & +.003 [$-$.013, +.019] & $-$.896 [$-$.949, $-$.839]\\
+\quad advocates & $-$.034 [$-$.064, $-$.008] & $-$.065 [$-$.133, $-$.005]\\
+\quad adv.\ + selector slot ($K$) & +.010 [$-$.013, +.035] & +.051 [$-$.002, +.118]\\
+\quad redundancy, isolated & $-$.033 [$-$.062, $-$.007] & +.094 [+.035, +.154]\\
+\midrule
+\multicolumn{3}{@{}l}{\emph{TCGA-RCC (BA)}}\\
+\quad single selector & $-$.008 [$-$.026, +.008] & $-$.717 [$-$.747, $-$.686]\\
+\quad advocates & +.010 [$-$.002, +.021] & $-$.306 [$-$.345, $-$.271]\\
+\quad adv.\ + selector slot ($K$) & +.009 [$-$.003, +.021] & $-$.025 [$-$.059, +.006]\\
+\quad redundancy, isolated & $-$.016 [$-$.030, $-$.002] & $-$.033 [$-$.073, +.003]\\
+\midrule
+\multicolumn{3}{@{}l}{\emph{TCGA-NSCLC (BA)}}\\
+\quad single selector & $-$.005 [$-$.014, +.003] & $-$.722 [$-$.739, $-$.703]\\
+\quad advocates & $-$.049 [$-$.062, $-$.036] & $-$.572 [$-$.590, $-$.555]\\
+\quad adv.\ + selector slot ($K$) & $-$.009 [$-$.020, +.003] & $-$.060 [$-$.080, $-$.042]\\
+\quad redundancy, isolated & $-$.028 [$-$.040, $-$.015] & $-$.261 [$-$.304, $-$.214]\\
+\bottomrule\end{tabular}\end{table}
+
+\section{Cohorts and splits}
+CAMELYON17: 500 slides from 5 hospitals, leave-one-hospital-out (5 folds). TCGA-RCC: 882 primary-tumour slides (KIRC/KIRP/KICH); TCGA-NSCLC: 1,041 primary-tumour slides (LUAD/LUSC); fixed patient-level stratified 5-fold splits shared by all seeds. Seeds change model initialisation and training order; test sets are fixed.
+\end{document}
