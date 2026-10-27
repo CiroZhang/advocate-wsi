@@ -79,8 +79,8 @@ def fps(pts, k):
     sel = [0]; dmin = (pts - pts[0]).norm(dim=1)
     for _ in range(1, min(k, len(pts))): j = int(dmin.argmax()); sel.append(j); dmin = torch.minimum(dmin, (pts - pts[j]).norm(dim=1))
     return torch.tensor(sel)
-def students(i):
-    e, p = G[i][:, 0], P[i]; n = len(e); k = min(Kc, n); top = int(e.argmax()); dd = (p - p[top]).norm(dim=1)
+def students(i, kk=None):
+    e, p = G[i][:, 0], P[i]; n = len(e); k = min(kk or Kc, n); top = int(e.argmax()); dd = (p - p[top]).norm(dim=1)
     neg = (-e).topk(k).indices
     itc = dd.topk(k, largest=False).indices
     near = torch.where(dd <= 2.0)[0]; micro = near[e[near].topk(min(k, len(near))).indices]
@@ -116,7 +116,8 @@ def run_teacher(keep_flags, tag):
     L[tag + '_wb_worst'] = np.stack(worst)
 BONLY = os.environ.get('BONLY')  # budget-matched single selector only (skips the teachers)
 ARCH = os.environ.get('ARCH')  # generality: same selector and attacks, other MIL judge (archs.py); skips everything else
-if not BONLY and not ARCH: run_teacher(True, 'teach'); run_teacher(False, 'noflag')
+BBOX = os.environ.get('BBOX')  # black-box, label-free attacker (ext.bbox_run); skips everything else
+if not BONLY and not ARCH and not BBOX: run_teacher(True, 'teach'); run_teacher(False, 'noflag')
 # ADMIL-style: top-K (K = C*Kc) by distilled attention -> full 4-class teacher; compromised selector: white-box toward a wrong level
 K = C * Kc
 L['admil'] = predict(fu4, [XE[i][G[i][:, 1].topk(min(K, len(XE[i]))).indices] for i in te])
@@ -130,6 +131,11 @@ def admil_wb(i, KK=None):
         if best is None or Fn.softmax(torch.tensor(v), 0)[y[i]] < Fn.softmax(torch.tensor(best), 0)[y[i]]: best = v
     return best
 L['admil_wb_worst'] = np.stack([admil_wb(i) for i in te])
+if BBOX:
+    sys.path.insert(0, os.path.dirname(os.path.abspath(__file__))); import ext
+    cx = ext.Ctx(XE=XE, extra=lambda i, idx: (P[i][idx] - P[i][idx[0]]) / 5.0, E=2, C=C, y=y, tr=tr, te=te, rng=rng, DEV=DEV, predict=predict, train=train)
+    ext.bbox_run(cx, fu4, lambda i, c, k: students(i, k)[c], lambda i, k: G[i][:, 1].topk(min(k, len(XE[i]))).indices, SS, Kc, K, mets,
+                 f'{OUT}/c17_{CH}_k{Kc}_f{fold}_s{seed}_bbox.json', t0, info={'seed': seed, 'fold': fold, 'Kc': Kc, 'K': K}); sys.exit(0)
 if ARCH:
     sys.path.insert(0, os.path.dirname(os.path.abspath(__file__))); import ext
     cx = ext.Ctx(XE=XE, extra=lambda i, idx: (P[i][idx] - P[i][idx[0]]) / 5.0, E=2, C=C, y=y, tr=tr, te=te, rng=rng, DEV=DEV, predict=predict)

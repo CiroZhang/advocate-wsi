@@ -132,3 +132,33 @@ def arch_run(cx, arch, train, top, SS, Kc, K, mets, out, t0, info):
     run(cx, [('x_red', {i: red(i, Kc) for i in N}, True, 'any'), (f'x_hyb{K}', {i: SS[i] + [top(i, K)] for i in N}, True)], LA,
         log=lambda t: print('arch', t, f'{time.time() - t0:.0f}s', flush=True))
     R.update({k: mets(v) for k, v in LA.items()}); json.dump({'res': R, 'info': info}, open(out, 'w'), indent=1)
+
+def bbox_run(cx, fu, att, top, SS, Kc, K, mets, out, t0, info):
+    """Black-box, label-free attacker (BBOX=1): it knows neither the label nor the judge. It pushes every slide toward one fixed
+    target class c, choosing tiles with the cheap scorer only (att(i, c, k) = the advocate rule for c with budget k), and takes the
+    single selector or one slot of a multi-slot presenter (worst over slot positions). Reported per target class c (all test
+    slides, including those of class c); *_bb_mean / *_bb_min = mean / min over c. fu = full-slide judge used by the single selector."""
+    import json, time
+    C, XE, te = cx.C, cx.XE, cx.te; R = {'single': mets(cx.predict(fu, [XE[i][top(i, K)] for i in te]))}
+    per = [mets(cx.predict(fu, [XE[i][att(i, c, K)] for i in te])) for c in range(C)]
+    for c, r in enumerate(per): R[f'single_bb{c}'] = r
+    def multi(tag, SSd):
+        global ANYSLOT
+        ANYSLOT = True; m = train_judge(cx, SSd); ANYSLOT = False; NF = len(SSd[te[0]])
+        R[tag] = mets(cx.predict(m, [rows(cx, i, SSd[i]) for i in te]))
+        for c in range(C):
+            worst = []
+            for i in te:
+                cands = []
+                for s in range(NF):
+                    S2 = list(SSd[i]); S2[s] = att(i, c, len(SSd[i][s])); cands.append(cx.predict(m, [rows(cx, i, S2)])[0])
+                worst.append(min(cands, key=lambda v: Fn.softmax(torch.tensor(v), 0)[int(cx.y[i])].item()))
+            R[f'{tag}_bb{c}'] = mets(np.stack(worst))
+        print('bbox', tag, f'{time.time() - t0:.0f}s', flush=True)
+    N = range(len(XE))
+    def red(i, k): t = top(i, (C + 1) * k); return [t[j::C + 1] if j < len(t) else t[:1] for j in range(C + 1)]
+    multi('x_red', {i: red(i, Kc) for i in N}); multi(f'x_hyb{K}', {i: SS[i] + [top(i, K)] for i in N})
+    for tag in ['single', 'x_red', f'x_hyb{K}']:
+        for met in R['single']:
+            v = [R[f'{tag}_bb{c}'][met] for c in range(C)]; R.setdefault(f'{tag}_bb_mean', {})[met] = float(np.mean(v)); R.setdefault(f'{tag}_bb_min', {})[met] = float(np.min(v))
+    json.dump({'res': R, 'info': info}, open(out, 'w'), indent=1)
