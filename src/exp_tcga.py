@@ -180,7 +180,7 @@ if EXT:  # extended robustness experiments (ext.py): adaptive attack, hybrid pre
         t = top(G, i, (C + 1) * k); return [t[j::C + 1] if j < len(t) else t[:1] for j in range(C + 1)]
     RED = [('x_red', {i: red(i, Kc) for i in N}, True, 'any'), ('x_rediso', {i: red(i, Kc) for i in N}, True, 'iso'),
            ('x_hybiso', {i: SS[i] + [top(G, i, Kc)] for i in N}, True, 'iso')]
-    ext.run(cx, RED if os.environ.get('RED') else [('x_base', {i: SS[i] for i in N}, True),
+    ext.run(cx, [c for c in RED if os.environ['RED'] != 'iso' or c[3] == 'iso'] if os.environ.get('RED') else [('x_base', {i: SS[i] for i in N}, True),
                  (f'x_hyb{Kc}', {i: SS[i] + [top(G, i, Kc)] for i in N}, True),
                  (f'x_hyb{K}', {i: SS[i] + [top(G, i, K)] for i in N}, True),
                  ('x_indep', {i: [adv_g(Gs[c], i)[c] for c in range(C)] for i in N}, False),

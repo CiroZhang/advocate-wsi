@@ -5,7 +5,7 @@ A presentation is a list of slots (index tensors into the slide's tiles); slot s
   hybrid          : the C advocates plus one neutral slot showing the single selector's top tiles (by distilled attention);
                     any one slot, including the neutral one, may be compromised.
 Configs that need new cheap scorers (independent per-advocate scorers, weak scorer) are built by the calling script."""
-import os, numpy as np, torch, torch.nn.functional as Fn
+import os, math, numpy as np, torch, torch.nn.functional as Fn
 
 class Ctx:  # XE, extra(i, idx) -> (len(idx), E) extra columns, E, C, y, tr, te, train, predict, rng, DEV
     def __init__(s, **kw): s.__dict__.update(kw)
@@ -80,21 +80,26 @@ def train_iso(cx, SS):  # isolate-then-aggregate judge: one bag per slot (flag o
         m = cx.train(sets, ys, cx.C, 5, model=m)
     return m
 
+AGG = {'': lambda P: P.mean(0),  # mean of per-slot log-probs (as in RobustRAG's keyword/decoding aggregation)
+       '_clip': lambda P: P.clamp(min=math.log(.05)).mean(0),  # bounded: one slot can move the mean by at most log(20)/m
+       '_vote': lambda P: Fn.one_hot(P.argmax(1), P.shape[1]).float().sum(0) + 1e-3 * P.exp().mean(0)}  # majority vote, ties by mean prob
+
 def evaluate_iso(cx, m, SS, tag, L):
-    """Each slot judged alone; aggregate = mean of per-slot log-probs. Attack: one slot replaced (per-tile or greedy set attack against
-    that slot alone, any wrong class); L[tag] clean, L[tag_ad] per-slide worst case."""
+    """Each slot judged alone, then aggregated (AGG: mean log-prob, clipped log-prob, majority vote). Attack: one slot replaced (per-tile
+    or greedy set attack against that slot alone, any wrong class); L[tag+agg] clean, L[tag+agg+'_ad'] per-slide worst case."""
     lp = lambda i, S: [torch.tensor(cx.predict(m, [rows(cx, i, [idx])])[0]).log_softmax(0) for idx in S]
-    clean, worst = [], []
+    clean, worst = {g: [] for g in AGG}, {g: [] for g in AGG}
     for i in cx.te:
-        P = lp(i, SS[i]); clean.append(torch.stack(P).mean(0).numpy()); yt = int(cx.y[i]); best = None
+        P = lp(i, SS[i]); yt = int(cx.y[i]); cands = []
         for s in range(len(SS[i])):
             for lv in range(cx.C):
                 if lv == yt: continue
                 for att in (wb, adaptive):
-                    Q = list(P); Q[s] = lp(i, [att(cx, m, i, [SS[i][s]], 0, lv)[0]])[0]; v = torch.stack(Q).mean(0).numpy()
-                    if best is None or Fn.softmax(torch.tensor(v), 0)[yt] < Fn.softmax(torch.tensor(best), 0)[yt]: best = v
-        worst.append(best)
-    L[tag] = np.stack(clean); L[f'{tag}_ad'] = np.stack(worst)
+                    Q = list(P); Q[s] = lp(i, [att(cx, m, i, [SS[i][s]], 0, lv)[0]])[0]; cands.append(torch.stack(Q))
+        for g, f in AGG.items():
+            clean[g].append(f(torch.stack(P)).numpy())
+            worst[g].append(min((f(Q).numpy() for Q in cands), key=lambda v: Fn.softmax(torch.tensor(v), 0)[yt].item()))
+    for g in AGG: L[tag + g] = np.stack(clean[g]); L[f'{tag}{g}_ad'] = np.stack(worst[g])
 
 def run(cx, configs, L, log=print):
     """configs: list of (tag, SS dict over all slides, adapt flag[, mode]); mode 'any' = unlabelled slots (attacker takes any slot),
