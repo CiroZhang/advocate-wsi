@@ -1,0 +1,70 @@
+{
+ "V* Qwen2.5": {
+  "global_only": "0.665 [0.602,0.733] n=191",
+  "full_hi": "0.707 [0.639,0.764] n=191",
+  "adv tile: some tile makes correct->wrong (among global-correct)": "0.457 [0.370,0.551] n=127",
+  "some tile makes wrong->correct (among global-wrong)": "0.969 [0.922,1.000] n=64",
+  "random tile: P(correct->wrong)": "0.092 [0.054,0.134] n=127",
+  "random tile: P(wrong->correct)": "0.120 [0.074,0.176] n=64",
+  "self-zoom realized: correct->wrong (among global-correct)": "0.063 [0.024,0.111] n=126",
+  "self-zoom realized: wrong->correct (among global-wrong)": "0.590 [0.459,0.705] n=61",
+  "best-of natural candidates: some zoom correct->wrong (among global-correct)": "0.087 [0.040,0.135] n=126",
+  "oracle 1v1 debate (honest side = true answer), min order": "0.775 [0.712,0.832] n=191"
+ },
+ "V* Qwen3": {
+  "global_only": "0.691 [0.628,0.754] n=191",
+  "full_hi": "0.743 [0.681,0.806] n=191",
+  "adv tile: some tile makes correct->wrong (among global-correct)": "0.568 [0.485,0.652] n=132",
+  "some tile makes wrong->correct (among global-wrong)": "0.949 [0.881,1.000] n=59",
+  "random tile: P(correct->wrong)": "0.130 [0.086,0.176] n=132",
+  "random tile: P(wrong->correct)": "0.118 [0.084,0.161] n=59",
+  "self-zoom realized: correct->wrong (among global-correct)": "0.058 [0.017,0.100] n=120",
+  "self-zoom realized: wrong->correct (among global-wrong)": "0.675 [0.525,0.825] n=40",
+  "best-of natural candidates: some zoom correct->wrong (among global-correct)": "0.073 [0.033,0.122] n=123",
+  "oracle 1v1 debate (honest side = true answer), min order": "0.827 [0.770,0.880] n=191"
+ },
+ "HR4K Qwen2.5": {
+  "global_only": "0.600 [0.535,0.665] n=200",
+  "full_hi": "0.590 [0.520,0.655] n=200",
+  "adv tile: some tile makes correct->wrong (among global-correct)": "0.383 [0.300,0.475] n=120",
+  "some tile makes wrong->correct (among global-wrong)": "0.700 [0.600,0.800] n=80",
+  "random tile: P(correct->wrong)": "0.132 [0.086,0.184] n=120",
+  "random tile: P(wrong->correct)": "0.139 [0.090,0.196] n=80",
+  "self-zoom realized: correct->wrong (among global-correct)": "0.080 [0.035,0.133] n=113",
+  "self-zoom realized: wrong->correct (among global-wrong)": "0.359 [0.234,0.469] n=64",
+  "best-of natural candidates: some zoom correct->wrong (among global-correct)": "0.192 [0.125,0.259] n=120",
+  "oracle 1v1 debate (honest side = true answer), min order": "0.695 [0.630,0.755] n=200"
+ },
+ "DeepEyes full-res": {
+  "native": "0.832 [0.780,0.885] n=191",
+  "gt: acc": "0.838 [0.780,0.890] n=191",
+  "gt: correct->wrong": "0.000 [0.000,0.000] n=159",
+  "gt: wrong->correct": "0.031 [0.000,0.094] n=32",
+  "adv0: acc": "0.827 [0.770,0.880] n=191",
+  "adv0: correct->wrong": "0.025 [0.006,0.050] n=159",
+  "adv0: wrong->correct": "0.094 [0.000,0.188] n=32",
+  "rand0: acc": "0.843 [0.791,0.895] n=191",
+  "rand0: correct->wrong": "0.006 [0.000,0.019] n=159",
+  "rand0: wrong->correct": "0.094 [0.000,0.219] n=32",
+  "crop-necessary subset (n=46): native": "0.696 [0.565,0.826] n=46",
+  "crop-necessary: GT crop": "0.696 [0.565,0.826] n=46",
+  "crop-necessary: any adversarial crop -> wrong": "0.326 [0.196,0.457] n=46",
+  "crop-necessary: random crop": "0.674 [0.543,0.804] n=46"
+ },
+ "DeepEyes 768 overview": {
+  "native": "0.681 [0.607,0.743] n=191",
+  "gt: acc": "0.707 [0.644,0.770] n=191",
+  "gt: correct->wrong": "0.008 [0.000,0.023] n=130",
+  "gt: wrong->correct": "0.098 [0.033,0.180] n=61",
+  "adv0: acc": "0.681 [0.613,0.743] n=191",
+  "adv0: correct->wrong": "0.015 [0.000,0.038] n=130",
+  "adv0: wrong->correct": "0.033 [0.000,0.082] n=61",
+  "rand0: acc": "0.696 [0.628,0.759] n=191",
+  "rand0: correct->wrong": "0.015 [0.000,0.038] n=130",
+  "rand0: wrong->correct": "0.082 [0.016,0.148] n=61",
+  "crop-necessary subset (n=46): native": "0.239 [0.130,0.370] n=46",
+  "crop-necessary: GT crop": "0.283 [0.152,0.413] n=46",
+  "crop-necessary: any adversarial crop -> wrong": "0.826 [0.717,0.935] n=46",
+  "crop-necessary: random crop": "0.239 [0.130,0.370] n=46"
+ }
+}
