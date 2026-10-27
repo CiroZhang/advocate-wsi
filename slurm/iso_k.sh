@@ -4,8 +4,8 @@
 #SBATCH --account=aip-xli135
 #SBATCH --gres=gpu:l40s:1
 #SBATCH --cpus-per-task=6
-#SBATCH --mem=120G
-#SBATCH --time=6:00:00
+#SBATCH --mem=64G
+#SBATCH --time=2:00:00
 #SBATCH --array=0-4
 #SBATCH --job-name=iso
 #SBATCH --output=/scratch/ciro/cvpr_lab_k/runs/%x_%A_%a.log
