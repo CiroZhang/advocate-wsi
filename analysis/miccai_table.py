@@ -39,3 +39,4 @@ f = lambda x: '--' if x is None else ('%.3f' % x[0]).replace('0.', '.').replace(
 L = [('\\midrule\n' if name.startswith('advocates') and name.endswith('advocates') or name.startswith('redundancy, iso') else '') + ' & '.join([name] + [f(T[ds][name][j]) for ds, _ in DS for j in (0, 1)]) + '\\\\' for name, *_ in ROWS]
 open(f'{B}/paper/miccai/tab_main.tex', 'w').write('\n'.join(L) + '\n\\bottomrule\n')
 for name, *_ in ROWS: print(f'{name:45s}', '  '.join('%.3f/%s' % (T[ds][name][0][0], '%.3f' % T[ds][name][1][0] if T[ds][name][1] else ' -- ') for ds, _ in DS))
+json.dump({ds: {name: v for name, v in T[ds].items()} for ds in T}, open(f'{R}/miccai_table.json', 'w'), indent=1)
